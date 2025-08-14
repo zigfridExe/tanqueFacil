@@ -36,7 +36,7 @@ export default function HomeScreen() {
 
           <TouchableOpacity 
             style={styles.actionCard} 
-            onPress={() => handleNavegarPara('/abastecimento')}
+            onPress={() => handleNavegarPara('/abastecimento-registro')}
           >
             <ThemedText style={styles.actionCardTitle}>⛽ Abastecer</ThemedText>
             <ThemedText style={styles.actionCardSubtitle}>Registrar abastecimento</ThemedText>

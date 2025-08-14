@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
@@ -68,19 +68,8 @@ export default function VeiculoCadastro() {
     }
   };
 
-  const handleCancelar = () => {
-    router.back();
-  };
-
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleCancelar} style={styles.backButton}>
-          <ThemedText style={styles.backButtonText}>← Voltar</ThemedText>
-        </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Novo Veículo</ThemedText>
-        <View style={styles.placeholder} />
-      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Nome do Veículo */}
@@ -208,7 +197,7 @@ export default function VeiculoCadastro() {
 
         {/* Botões */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancelar} disabled={loading}>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()} disabled={loading}>
             <ThemedText style={styles.cancelButtonText}>Cancelar</ThemedText>
           </TouchableOpacity>
           
@@ -235,28 +224,17 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
     paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: Colors.light.tint,
   },
-  backButton: {
-    padding: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: Colors.light.tint,
-    fontWeight: '600',
-  },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: Colors.light.text,
-  },
-  placeholder: {
-    width: 60,
   },
   scrollContainer: {
     padding: 20,

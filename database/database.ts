@@ -1,13 +1,13 @@
-// SDK 53: usar a nova API async do expo-sqlite
 import * as SQLite from 'expo-sqlite';
 
-let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+
+let db: SQLite.SQLiteDatabase | null = null;
 
 export const getDb = async (): Promise<SQLite.SQLiteDatabase> => {
-	if (!dbPromise) {
-		dbPromise = SQLite.openDatabaseAsync('tanqueFacil.db');
-	}
-	return dbPromise;
+  if (!db) {
+    db = await SQLite.openDatabaseAsync('tanqueFacil.db');
+  }
+  return db;
 };
 
 export interface DatabaseResult {

@@ -1,4 +1,17 @@
+
 # Lições Aprendidas — Integração do SQLite no Expo (SDK 53)
+
+## [Agosto/2025] Sobre a importação do expo-sqlite (`/next` vs padrão)
+
+Durante a implementação, houve confusão entre a nova API assíncrona (`expo-sqlite/next`) e a API padrão (`expo-sqlite`).
+
+- O caminho `expo-sqlite/next` só deve ser usado se o projeto estiver explicitamente configurado para tal, pois não é o padrão nem obrigatório no SDK 53.
+- A importação padrão `import * as SQLite from 'expo-sqlite'` é a mais compatível e recomendada para evitar erros de build e resolução de módulo.
+- Mesmo com SDKs recentes, a API padrão já suporta métodos assíncronos como `openDatabaseAsync`, sem necessidade do `/next`.
+- Tentar usar `/next` sem configuração adequada resulta em erro de importação e falha no build.
+
+**Resumo:**
+Prefira sempre a importação padrão do SQLite no Expo, a menos que tenha certeza de que o `/next` está habilitado e suportado pelo projeto. Isso evita dores de cabeça desnecessárias e garante compatibilidade máxima.
 
 > Referência principal: [Expo SQLite (API atual)](https://docs.expo.dev/versions/latest/sdk/sqlite/)
 
