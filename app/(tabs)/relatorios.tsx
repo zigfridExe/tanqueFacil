@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ActivityIndicator, FlatList } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
 import { useVeiculos } from '@/hooks/useVeiculos';
 import { Abastecimento, Veiculo } from '@/types/veiculo';
 import { Colors } from '@/constants/Colors';
+import { Link } from 'expo-router';
 
 interface ConsumoMedioResultado {
   veiculoId: number;
@@ -90,7 +91,12 @@ export default function RelatoriosScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>Relatórios de Consumo</ThemedText>
+        <ThemedText style={styles.title}>Relatórios</ThemedText>
+        <Link href="/abastecimento-mapa" asChild>
+            <TouchableOpacity style={styles.mapButton}>
+                <ThemedText style={styles.mapButtonText}>Ver Mapa</ThemedText>
+            </TouchableOpacity>
+        </Link>
       </View>
 
       {isLoading ? (
@@ -126,13 +132,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     paddingTop: 60,
-    alignItems: 'center',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+  },
+  mapButton: {
+    backgroundColor: Colors.light.tint,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  mapButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   loadingState: {
     flex: 1,
@@ -162,7 +181,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   listContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
   },
   card: {
     backgroundColor: Colors.light.background,
