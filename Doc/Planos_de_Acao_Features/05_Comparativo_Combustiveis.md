@@ -1,4 +1,4 @@
-# Plano de Ação: Comparativo de Combustíveis
+# Plano de Ação: Comparativo de Combustíveis ✅
 
 ## Objetivo
 Permitir ao usuário comparar preços de gasolina e etanol, indicando o combustível mais vantajoso.
@@ -12,3 +12,5 @@ Permitir ao usuário comparar preços de gasolina e etanol, indicando o combust�
 ## Critérios de Aceite
 - Usuário recebe indicação clara do combustível mais vantajoso
 - Interface rápida e intuitiva
+
+**Status: Concluído.** A tela de comparação foi implementada e integrada ao dashboard.

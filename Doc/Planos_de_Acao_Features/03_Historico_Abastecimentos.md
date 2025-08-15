@@ -1,4 +1,4 @@
-# Plano de Ação: Histórico de Abastecimentos
+# Plano de Ação: Histórico de Abastecimentos ✅
 
 ## Objetivo
 Exibir lista de abastecimentos registrados, ordenados por data, com informações essenciais.
@@ -14,3 +14,5 @@ Exibir lista de abastecimentos registrados, ordenados por data, com informaçõe
 ## Critérios de Aceite
 - Usuário visualiza histórico completo
 - Dados exibidos corretamente e ordenados
+
+**Status: Concluído.** A tela de histórico foi implementada e integrada ao dashboard.

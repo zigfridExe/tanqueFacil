@@ -28,26 +28,26 @@ export default function HomeScreen() {
         <View style={styles.quickActions}>
           <TouchableOpacity 
             style={styles.actionCard} 
-            onPress={() => handleNavegarPara('/veiculo-cadastro')}
-          >
-            <ThemedText style={styles.actionCardTitle}>+ Novo Veículo</ThemedText>
-            <ThemedText style={styles.actionCardSubtitle}>Cadastrar veículo</ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard} 
             onPress={() => handleNavegarPara('/abastecimento-registro')}
           >
             <ThemedText style={styles.actionCardTitle}>⛽ Abastecer</ThemedText>
-            <ThemedText style={styles.actionCardSubtitle}>Registrar abastecimento</ThemedText>
+            <ThemedText style={styles.actionCardSubtitle}>Registrar</ThemedText>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.actionCard} 
-            onPress={() => handleNavegarPara('/test-sqlite')}
+            onPress={() => handleNavegarPara('/combustivel-comparador')}
           >
-            <ThemedText style={styles.actionCardTitle}>🧪 Teste SQLite</ThemedText>
-            <ThemedText style={styles.actionCardSubtitle}>Verificar funcionamento</ThemedText>
+            <ThemedText style={styles.actionCardTitle}>⚖️ Comparar</ThemedText>
+            <ThemedText style={styles.actionCardSubtitle}>Verificar Preços</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard} 
+            onPress={() => handleNavegarPara('/abastecimento-historico')}
+          >
+            <ThemedText style={styles.actionCardTitle}>📊 Histórico</ThemedText>
+            <ThemedText style={styles.actionCardSubtitle}>Ver registros</ThemedText>
           </TouchableOpacity>
         </View>
 

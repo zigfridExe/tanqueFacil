@@ -170,12 +170,9 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - **Navegação**
   - Tab "Veículos" adicionada ao layout principal
   - Rotas organizadas seguindo a estrutura do projeto
-
-### Próximos passos:
-1. ✅ Implementar persistência de dados (SQLite)
-2. ✅ Criar tela de registro de abastecimentos
-3. 🔄 Implementar histórico e relatórios
-4. 🔄 Adicionar funcionalidade de comparação de combustíveis
+  - **Navegação Inferior Atualizada:**
+    - Aba "Explore" removida.
+    - Abas "Relatórios" e "Configurações" adicionadas.
 
 ### ✅ SQLite Implementado com Sucesso!
 
@@ -203,7 +200,7 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - `hooks/useAbastecimentos.ts` - Hook personalizado para gerenciar estado
 - Integração completa com o banco SQLite existente
 
-**Funcionalidades Implementadas:**
+**Funcionalidades Implementadas (Veículos):**
 - ✅ Criação de veículos com persistência
 - ✅ Listagem de veículos do banco
 - ✅ Exclusão de veículos (com validação de integridade)
@@ -213,11 +210,26 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - ✅ Refresh control para atualizar dados
 - ✅ Validação de exclusão (impede exclusão se há abastecimentos)
 
-**Arquitetura:**
+**Arquitetura (Veículos):**
 - `database/database.ts` - Configuração e inicialização do SQLite
 - `services/veiculoService.ts` - Operações CRUD no banco
 - `hooks/useVeiculos.ts` - Hook personalizado para gerenciar estado
 - Integração completa com as telas existentes
+
+### ✅ Tela de Histórico de Abastecimentos Implementada!
+- **Tela:** `app/abastecimento-historico.tsx`
+- **Funcionalidade:** Lista todos os abastecimentos registrados, com opção de exclusão.
+- **Acesso:** Botão "📊 Histórico" no Dashboard.
+
+### ✅ Tela de Comparador de Combustível Implementada!
+- **Tela:** `app/combustivel-comparador.tsx`
+- **Funcionalidade:** Permite comparar preços de gasolina e etanol com base no consumo do veículo, recomendando a melhor opção.
+- **Acesso:** Botão "⚖️ Comparar" no Dashboard.
+
+### ✅ Cálculo de Consumo Médio Implementado!
+- **Tela:** `app/(tabs)/relatorios.tsx`
+- **Funcionalidade:** Calcula e exibe o consumo médio (km/L) para cada veículo, baseado nos abastecimentos registrados.
+- **Acesso:** Nova aba "Relatórios" no menu inferior.
 
 ### 🔧 Problemas Identificados e Corrigidos:
 
@@ -250,6 +262,12 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - ✅ Corrigida versão do expo-sqlite (15.2.14 → 11.3.3)
 - ✅ Navegação corrigida para `/abastecimento-registro`
 - **Status**: Corrigido ✅
+
+### Próximos passos:
+- **Configurações:** Implementar as opções de configuração do aplicativo na aba "Configurações".
+- **Manutenção Básica:** Desenvolver as funcionalidades de lembretes e histórico de manutenção.
+- **Gerenciamento de Combustível:** Implementar o registro de nível do tanque, cálculo de autonomia e estimativa de litros necessários.
+- **Relatórios Avançados:** Expandir a tela de relatórios com mais métricas e visualizações (ex: histórico em mapa).
 
 
 ## Critérios de Aceite

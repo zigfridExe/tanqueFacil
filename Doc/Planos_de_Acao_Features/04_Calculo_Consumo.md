@@ -1,4 +1,4 @@
-# Plano de Ação: Cálculo de Consumo
+# Plano de Ação: Cálculo de Consumo ✅
 
 ## Objetivo
 Calcular e exibir o consumo médio (km/l) do veículo entre abastecimentos.
@@ -12,3 +12,5 @@ Calcular e exibir o consumo médio (km/l) do veículo entre abastecimentos.
 ## Critérios de Aceite
 - Consumo médio calculado corretamente
 - Informação exibida ao usuário
+
+**Status: Concluído.** O cálculo de consumo médio foi implementado e integrado à tela de Relatórios.
