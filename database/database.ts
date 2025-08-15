@@ -56,3 +56,42 @@ CREATE TABLE IF NOT EXISTS Abastecimentos (
 };
 
 export default getDb;
+
+export const resetDatabase = async (): Promise<DatabaseResult> => {
+  try {
+    const db = await getDb();
+    await db.execAsync(`
+      DROP TABLE IF EXISTS Abastecimentos;
+      DROP TABLE IF EXISTS Carro;
+    `);
+    await initDatabase(); // Recria as tabelas
+    return { success: true, message: 'Banco de dados redefinido com sucesso' };
+  } catch (error: any) {
+    console.error('Erro ao redefinir o banco de dados:', error);
+    return { success: false, message: 'Erro ao redefinir o banco de dados: ' + error?.message };
+  }
+};
+
+// Função de teste para verificar a criação da tabela
+export const testDatabaseCreation = async () => {
+  try {
+    console.log("Iniciando teste de criação do banco de dados...");
+    const result = await initDatabase();
+    console.log("Resultado da inicialização:", result);
+    if (result.success) {
+      const db = await getDb();
+      const statement = await db.prepareAsync("SELECT name FROM sqlite_master WHERE type='table' AND name='Carro'");
+      const tableResult = await statement.executeAsync();
+      const table = await tableResult.getFirstAsync();
+      
+      if (table) {
+        console.log("Tabela 'Carro' encontrada com sucesso.");
+      } else {
+        console.error("Erro: Tabela 'Carro' não foi criada.");
+      }
+      await statement.finalizeAsync();
+    }
+  } catch (error) {
+    console.error("Erro no teste de criação do banco de dados:", error);
+  }
+};
