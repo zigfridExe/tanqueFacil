@@ -28,6 +28,14 @@ export default function HomeScreen() {
         <View style={styles.quickActions}>
           <TouchableOpacity 
             style={styles.actionCard} 
+            onPress={() => handleNavegarPara('/gerenciamento-combustivel')}
+          >
+            <ThemedText style={styles.actionCardTitle}>⛽ Gerenciar</ThemedText>
+            <ThemedText style={styles.actionCardSubtitle}>Nível e Autonomia</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionCard} 
             onPress={() => handleNavegarPara('/abastecimento-registro')}
           >
             <ThemedText style={styles.actionCardTitle}>⛽ Abastecer</ThemedText>
@@ -155,15 +163,18 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    gap: 15,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: 30,
   },
   actionCard: {
-    flex: 1,
+    width: '48%',
     backgroundColor: Colors.light.tint,
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
+    marginHorizontal: '1%',
+    marginBottom: 15,
   },
   actionCardTitle: {
     fontSize: 18,

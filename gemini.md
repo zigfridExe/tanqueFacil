@@ -130,6 +130,7 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - Auxiliar na tomada de decisão técnica
 - Garantir alinhamento com requisitos e cronograma
 - Executar e registrar todas as ações realizadas pela IA no projeto
+- **Commits:** Apenas o usuário humano pode realizar commits. A IA irá preparar e propor mensagens de commit, mas nunca executará o comando `git commit`.
 
 
 ## Etapas de Controle
