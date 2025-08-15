@@ -267,7 +267,6 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 ### Próximos passos:
 - **Configurações:** Implementar as opções de configuração do aplicativo na aba "Configurações".
 - **Manutenção Básica:** Desenvolver as funcionalidades de lembretes e histórico de manutenção.
-- **Gerenciamento de Combustível:** Implementar o registro de nível do tanque, cálculo de autonomia e estimativa de litros necessários.
 - **Relatórios Avançados:** Expandir a tela de relatórios com mais métricas e visualizações (ex: histórico em mapa).
 
 
