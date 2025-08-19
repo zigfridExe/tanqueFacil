@@ -67,6 +67,7 @@ export default function AbastecimentoMapaScreen() {
         <MapView
           style={styles.map}
           initialRegion={initialRegion}
+          provider={null} // Set provider to null for custom tiles
         >
           <UrlTile
             urlTemplate="https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
