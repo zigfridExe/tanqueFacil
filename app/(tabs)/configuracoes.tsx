@@ -1,22 +1,64 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
-import * as database from '@/database/database'; // Importa o módulo do banco de dados
-import { useVeiculos } from '@/hooks/useVeiculos'; // Importa o hook useVeiculos
-import { router } from 'expo-router'; // Importa o router para navegação
-import React, { useState } from 'react';
+import * as database from '@/database/database';
+import { useVeiculos } from '@/hooks/useVeiculos';
+import { veiculoService } from '@/services/veiculoService';
+import { VeiculoForm } from '@/types/veiculo';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ConfiguracoesScreen() {
-  const { veiculos } = useVeiculos(); // Obtém os veículos cadastrados
-  const veiculoAtual = veiculos.length > 0 ? veiculos[0] : null; // Pega o primeiro veículo como o atual
+  const { veiculos, refreshVeiculos } = useVeiculos();
+  const veiculoAtual = veiculos.length > 0 ? veiculos[0] : null;
 
-  // Estados para as novas configurações
-  const [consumoType, setConsumoType] = useState<'aprendido' | 'manual'>(veiculoAtual?.consumoManualGasolina ? 'manual' : 'aprendido'); // Inicializa com 'manual' se houver consumo manual, senão 'aprendido'
-  const [pointerType, setPointerType] = useState<'analogico' | 'digital'>(veiculoAtual?.tipoPonteiro === 'Digital' ? 'digital' : 'analogico'); // Inicializa com base no tipoPonteiro do veículo
-  const [salvarLocalizacao, setSalvarLocalizacao] = useState<boolean>(veiculoAtual?.salvarLocalizacao || false); // Inicializa com base no salvarLocalizacao do veículo
-  const [lembreteCalibragem, setLembreteCalibragem] = useState<boolean>(veiculoAtual?.lembreteCalibragem || false); // Inicializa com base no lembreteCalibragem do veículo
-  const [frequenciaLembrete, setFrequenciaLembrete] = useState<string>(veiculoAtual?.frequenciaLembrete?.toString() || '30'); // Inicializa com base na frequenciaLembrete do veículo
+  const [consumoType, setConsumoType] = useState<'aprendido' | 'manual'>('aprendido');
+  const [salvarLocalizacao, setSalvarLocalizacao] = useState<boolean>(false);
+  const [lembreteCalibragem, setLembreteCalibragem] = useState<boolean>(false);
+  const [frequenciaLembrete, setFrequenciaLembrete] = useState<string>('30');
+
+  useFocusEffect(
+    useCallback(() => {
+      if (veiculoAtual) {
+        setConsumoType(veiculoAtual.consumoManualGasolina ? 'manual' : 'aprendido');
+        setSalvarLocalizacao(veiculoAtual.salvarLocalizacao);
+        setLembreteCalibragem(veiculoAtual.lembreteCalibragem);
+        setFrequenciaLembrete(veiculoAtual.frequenciaLembrete?.toString() || '30');
+      }
+    }, [veiculoAtual])
+  );
+
+  const handleSave = useCallback(async () => {
+    if (!veiculoAtual) return;
+
+    const veiculoForm: VeiculoForm = {
+      ...veiculoAtual,
+      capacidadeTanque: veiculoAtual.capacidadeTanque.toString(),
+      consumoManualGasolina: veiculoAtual.consumoManualGasolina.toString(),
+      consumoManualEtanol: veiculoAtual.consumoManualEtanol.toString(),
+      // tipoPonteiro is now handled only in veiculo-cadastro
+      salvarLocalizacao: salvarLocalizacao,
+      lembreteCalibragem: lembreteCalibragem,
+      frequenciaLembrete: frequenciaLembrete,
+    };
+
+    const result = await veiculoService.atualizar(veiculoAtual.id, veiculoForm);
+    if (result.success) {
+      refreshVeiculos();
+    } else {
+      Alert.alert('Erro', 'Não foi possível salvar as configurações.');
+    }
+  }, [veiculoAtual, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, refreshVeiculos]);
+
+  useEffect(() => {
+    if (!veiculoAtual) return;
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, handleSave, veiculoAtual]);
 
   const handleResetData = () => {
     Alert.alert(
@@ -31,6 +73,7 @@ export default function ConfiguracoesScreen() {
             try {
               await database.resetDatabase();
               Alert.alert('Sucesso', 'Todos os dados foram redefinidos.');
+              refreshVeiculos();
             } catch (error) {
               console.error('Erro ao redefinir dados:', error);
               Alert.alert('Erro', 'Não foi possível redefinir os dados.');
@@ -42,7 +85,9 @@ export default function ConfiguracoesScreen() {
   };
 
   const handleEditVehicle = () => {
-    router.push('/veiculo-cadastro'); // Navega para a tela de cadastro/edição de veículo
+    if (veiculoAtual) {
+      router.push({ pathname: '/veiculo-cadastro', params: { veiculoId: veiculoAtual.id } });
+    }
   };
 
   return (
@@ -52,144 +97,105 @@ export default function ConfiguracoesScreen() {
           <ThemedText style={styles.title}>Ajustes e Personalização</ThemedText>
         </View>
 
-        {/* Seção Dados do Veículo */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Dados do Veículo</ThemedText>
-          {veiculoAtual ? (
-            <View>
-              <View style={styles.aboutItem}>
-                <ThemedText style={styles.aboutLabel}>Veículo Atual:</ThemedText>
-                <ThemedText style={styles.aboutValue}>{veiculoAtual.nome}</ThemedText>
+        {veiculoAtual ? (
+          <>
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Dados do Veículo</ThemedText>
+              <View>
+                <View style={styles.aboutItem}>
+                  <ThemedText style={styles.aboutLabel}>Veículo Atual:</ThemedText>
+                  <ThemedText style={styles.aboutValue}>{veiculoAtual.nome}</ThemedText>
+                </View>
+                <View style={styles.aboutItem}>
+                  <ThemedText style={styles.aboutLabel}>Capacidade do Tanque:</ThemedText>
+                  <ThemedText style={styles.aboutValue}>{veiculoAtual.capacidadeTanque} Litros</ThemedText>
+                </View>
+                <TouchableOpacity style={styles.optionButton} onPress={handleEditVehicle}>
+                  <ThemedText style={styles.optionButtonText}>EDITAR DADOS DO CARRO</ThemedText>
+                </TouchableOpacity>
               </View>
-              <View style={styles.aboutItem}>
-                <ThemedText style={styles.aboutLabel}>Capacidade do Tanque:</ThemedText>
-                <ThemedText style={styles.aboutValue}>{veiculoAtual.capacidadeTanque} Litros</ThemedText>
-              </View>
-              <TouchableOpacity style={styles.optionButton} onPress={handleEditVehicle}>
-                <ThemedText style={styles.optionButtonText}>EDITAR DADOS DO CARRO</ThemedText>
-              </TouchableOpacity>
             </View>
-          ) : (
+
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Consumo de Combustível</ThemedText>
+              <ThemedText style={styles.label}>Qual a sua forma de acompanhamento preferida?</ThemedText>
+              <View style={styles.radioGroup}>
+                <TouchableOpacity
+                  style={[
+                    styles.radioButton,
+                    consumoType === 'aprendido' && styles.radioButtonSelected
+                  ]}
+                  onPress={() => setConsumoType('aprendido')}
+                >
+                  <ThemedText style={[
+                    styles.radioText,
+                    consumoType === 'aprendido' && styles.radioTextSelected
+                  ]}>
+                    Consumo Aprendido
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.radioButton,
+                    consumoType === 'manual' && styles.radioButtonSelected
+                  ]}
+                  onPress={() => setConsumoType('manual')}
+                >
+                  <ThemedText style={[
+                    styles.radioText,
+                    consumoType === 'manual' && styles.radioTextSelected
+                  ]}>
+                    Consumo Manual
+                    {consumoType === 'manual' && ` (${veiculoAtual.consumoManualGasolina} km/L)`}
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Funcionalidades Adicionais</ThemedText>
+              <View style={styles.switchGroup}>
+                <ThemedText style={styles.label}>Salvar Local do Abastecimento (GPS)</ThemedText>
+                <Switch
+                  value={salvarLocalizacao}
+                  onValueChange={setSalvarLocalizacao}
+                  trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+                  thumbColor={salvarLocalizacao ? Colors.light.background : Colors.light.text}
+                />
+              </View>
+
+              <View style={styles.switchGroup}>
+                <ThemedText style={styles.label}>Lembrete de Calibragem de Pneus</ThemedText>
+                <Switch
+                  value={lembreteCalibragem}
+                  onValueChange={setLembreteCalibragem}
+                  trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+                  thumbColor={lembreteCalibragem ? Colors.light.background : Colors.light.text}
+                />
+              </View>
+
+              {lembreteCalibragem && (
+                <View style={styles.inputGroup}>
+                  <ThemedText style={styles.label}>Lembrete a cada (dias)</ThemedText>
+                  <TextInput
+                    style={styles.input}
+                    value={frequenciaLembrete}
+                    onChangeText={setFrequenciaLembrete}
+                    placeholder="30"
+                    keyboardType="numeric"
+                    placeholderTextColor={Colors.light.text}
+                  />
+                </View>
+              )}
+            </View>
+          </>
+        ) : (
+          <View style={styles.section}>
             <ThemedText style={styles.aboutLabel}>Nenhum veículo cadastrado.</ThemedText>
-          )}
-        </View>
-
-        {/* Seção Consumo de Combustível */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Consumo de Combustível</ThemedText>
-          <ThemedText style={styles.label}>Qual a sua forma de acompanhamento preferida?</ThemedText>
-          <View style={styles.radioGroup}>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                consumoType === 'aprendido' && styles.radioButtonSelected
-              ]}
-              onPress={() => setConsumoType('aprendido')}
-            >
-              <ThemedText style={[
-                styles.radioText,
-                consumoType === 'aprendido' && styles.radioTextSelected
-              ]}>
-                Consumo Aprendido
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                consumoType === 'manual' && styles.radioButtonSelected
-              ]}
-              onPress={() => setConsumoType('manual')}
-            >
-              <ThemedText style={[
-                styles.radioText,
-                consumoType === 'manual' && styles.radioTextSelected
-              ]}>
-                Consumo Manual
-                {consumoType === 'manual' && veiculoAtual && ` (${veiculoAtual.consumoManualGasolina} km/L)`}
-              </ThemedText>
-            </TouchableOpacity>
+            <ThemedText style={styles.aboutLabel}>Cadastre um veículo para ver as configurações.</ThemedText>
           </View>
-        </View>
+        )}
 
-        {/* Seção Preferências de Exibição */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Preferências de Exibição</ThemedText>
-          <ThemedText style={styles.label}>Tipo de Ponteiro de Combustível</ThemedText>
-          <View style={styles.radioGroup}>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                pointerType === 'analogico' && styles.radioButtonSelected
-              ]}
-              onPress={() => setPointerType('analogico')}
-            >
-              <ThemedText style={[
-                styles.radioText,
-                pointerType === 'analogico' && styles.radioTextSelected
-              ]}>
-                Analógico (Ponteiro)
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                pointerType === 'digital' && styles.radioButtonSelected
-              ]}
-              onPress={() => setPointerType('digital')}
-            >
-              <ThemedText style={[
-                styles.radioText,
-                pointerType === 'digital' && styles.radioTextSelected
-              ]}>
-                Digital (Barra)
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Seção Funcionalidades Adicionais */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Funcionalidades Adicionais</ThemedText>
-          <View style={styles.switchGroup}>
-            <ThemedText style={styles.label}>Salvar Local do Abastecimento (GPS)</ThemedText>
-            <Switch
-              // TODO: Adicionar estado para salvarLocalizacao
-              // value={salvarLocalizacao}
-              // onValueChange={(value) => setSalvarLocalizacao(value)}
-              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              // thumbColor={salvarLocalizacao ? Colors.light.background : Colors.light.text}
-            />
-          </View>
-
-          <View style={styles.switchGroup}>
-            <ThemedText style={styles.label}>Lembrete de Calibragem de Pneus</ThemedText>
-            <Switch
-              // TODO: Adicionar estado para lembreteCalibragem
-              // value={lembreteCalibragem}
-              // onValueChange={(value) => setLembreteCalibragem(value)}
-              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              // thumbColor={lembreteCalibragem ? Colors.light.background : Colors.light.text}
-            />
-          </View>
-
-          {/* TODO: Renderizar condicionalmente */}
-          {/* {lembreteCalibragem && ( */}
-            <View style={styles.inputGroup}>
-              <ThemedText style={styles.label}>Lembrete a cada (dias)</ThemedText>
-              <TextInput
-                style={styles.input}
-                // TODO: Adicionar estado para frequenciaLembrete
-                // value={frequenciaLembrete}
-                // onChangeText={(value) => setFrequenciaLembrete(value)}
-                placeholder="30"
-                keyboardType="numeric"
-                placeholderTextColor={Colors.light.text}
-              />
-            </View>
-          {/* )} */}
-        </View>
-
-        {/* Seção Opções de Dados */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Opções de Dados</ThemedText>
           <TouchableOpacity style={styles.optionButton} onPress={() => Alert.alert('Funcionalidade em desenvolvimento', 'A exportação de histórico será implementada em breve.')}>
@@ -200,7 +206,6 @@ export default function ConfiguracoesScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Seção Sobre */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Sobre</ThemedText>
           <View style={styles.aboutItem}>

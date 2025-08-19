@@ -19,8 +19,8 @@ export interface DatabaseResult {
 export const initDatabase = async (): Promise<DatabaseResult> => {
 	try {
 		const db = await getDb();
+		await db.execAsync(`PRAGMA journal_mode = WAL;`);
 		await db.execAsync(`
-PRAGMA journal_mode = WAL;
 CREATE TABLE IF NOT EXISTS Carro (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nome TEXT NOT NULL,
@@ -30,8 +30,11 @@ CREATE TABLE IF NOT EXISTS Carro (
   tipoPonteiro TEXT NOT NULL,
   salvarLocalizacao INTEGER NOT NULL DEFAULT 0,
   lembreteCalibragem INTEGER NOT NULL DEFAULT 0,
-  frequenciaLembrete INTEGER NOT NULL DEFAULT 30
+  frequenciaLembrete INTEGER NOT NULL DEFAULT 30,
+  dataUltimaCalibragem TEXT -- Nova coluna
 );
+`);
+		await db.execAsync(`
 CREATE TABLE IF NOT EXISTS Abastecimentos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   data TEXT NOT NULL,
@@ -48,6 +51,27 @@ CREATE TABLE IF NOT EXISTS Abastecimentos (
   FOREIGN KEY (carroId) REFERENCES Carro (id)
 );
 `);
+
+    // Migration: Add dataUltimaCalibragem column if it doesn't exist
+    try {
+      const tableInfoResult = await db.runAsync("PRAGMA table_info(Carro);");
+      const rows = tableInfoResult?.rows; // Safely access rows
+
+      let columnExists = false;
+      if (Array.isArray(rows)) { // Ensure rows is an array
+        columnExists = rows.some((row: any) => row.name === 'dataUltimaCalibragem');
+      }
+
+      if (!columnExists) {
+        await db.execAsync("ALTER TABLE Carro ADD COLUMN dataUltimaCalibragem TEXT;");
+        console.log("Coluna 'dataUltimaCalibragem' adicionada à tabela 'Carro'.");
+      }
+    } catch (migrationError: any) {
+      // This catch block will handle the "duplicate column name" error if it occurs
+      // It's a fallback in case the PRAGMA check fails for some reason
+      console.warn("Erro durante a migração (pode ser coluna já existente):", migrationError.message);
+    }
+
 		return { success: true, message: 'Banco de dados inicializado com sucesso' };
 	} catch (error: any) {
 		console.error('Erro ao criar tabelas:', error);

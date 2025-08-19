@@ -8,6 +8,7 @@ export interface Veiculo {
   salvarLocalizacao: boolean;
   lembreteCalibragem: boolean;
   frequenciaLembrete: number;
+  dataUltimaCalibragem?: string; // Adicionado para armazenar a data da última calibragem
 }
 
 export interface VeiculoForm {
@@ -19,6 +20,7 @@ export interface VeiculoForm {
   salvarLocalizacao: boolean;
   lembreteCalibragem: boolean;
   frequenciaLembrete: string;
+  dataUltimaCalibragem?: string; // Adicionado para armazenar a data da última calibragem
 }
 
 export interface Abastecimento {

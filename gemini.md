@@ -150,6 +150,7 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
   - Campos: nome, capacidade do tanque, consumo gasolina/etanol, tipo de ponteiro
   - Switches para localização e lembretes de calibragem
   - Navegação com botão voltar
+  - **Edição de Veículos**: Formulário pré-preenchido com dados do veículo existente.
   
 - **Tela Principal de Veículos** (`/veiculos`)
   - Lista de veículos cadastrados
@@ -163,6 +164,7 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
   - Status do veículo atual
   - Lembretes e estatísticas
   - Navegação integrada
+  - **Lembrete de Calibragem de Pneus**: Exibição de alerta e botão para confirmar calibragem.
 
 - **Estrutura de Tipos**
   - Interfaces TypeScript para Veiculo e Abastecimento
@@ -173,14 +175,15 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
   - Rotas organizadas seguindo a estrutura do projeto
   - **Navegação Inferior Atualizada:**
     - Aba "Explore" removida.
-    - Abas "Relatórios" e "Configurações" adicionadas.
+    - Abas "Relatórios", "Configurações" adicionadas.
 
 ### ✅ SQLite Implementado com Sucesso!
 
 **Estrutura do Banco de Dados:**
 - **Tabela Carro**: Armazena todos os dados dos veículos
+  - **Migração**: Adicionada coluna `dataUltimaCalibragem` com estratégia de migração.
 - **Tabela Abastecimentos**: Preparada para futuros registros
-- **Relacionamentos**: Chave estrangeira entre veículos e abastecimentos
+- **Relacionamentos**: Chave estrangeira entre veículos e abastecimentos.
 
 ### ✅ Tela de Registro de Abastecimentos Implementada!
 
@@ -191,7 +194,7 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - **Tipos de Combustível**: Seleção entre Gasolina e Etanol
 - **Tipos de Trajeto**: Cidade, Estrada ou Misto
 - **Calibragem de Pneus**: Switch para marcar se foi realizada
-- **Integração com Banco**: Serviço completo para CRUD de abastecimentos
+- **Integracão com Banco**: Serviço completo para CRUD de abastecimentos
 - **Hook Personalizado**: useAbastecimentos para gerenciamento de estado
 - **Cálculo de Consumo**: Função para calcular consumo médio por veículo
 
@@ -232,6 +235,12 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - **Funcionalidade:** Calcula e exibe o consumo médio (km/L) para cada veículo, baseado nos abastecimentos registrados.
 - **Acesso:** Nova aba "Relatórios" no menu inferior.
 
+### ✅ Relatórios Avançados Implementado!
+- **Tela:** `app/(tabs)/relatorios.tsx`
+- **Funcionalidade:** Exibe estatísticas gerais de gastos, litros abastecidos, quilometragem total e custo médio por litro.
+- **Tela de Mapa:** `app/abastecimento-mapa.tsx` para visualização dos abastecimentos no mapa, utilizando **OpenStreetMap** (escolhido por ser gratuito e de código aberto).
+- **Acesso:** Botão "Ver Mapa" na tela de Relatórios.
+
 ### 🔧 Problemas Identificados e Corrigidos:
 
 **1. Erro de Importação SQLite:**
@@ -264,28 +273,22 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - ✅ Navegação corrigida para `/abastecimento-registro`
 - **Status**: Corrigido ✅
 
+**7. Ambiguidade de Configuração (Tipo de Ponteiro):**
+- ❌ Configuração de "Tipo de Ponteiro" duplicada em "Ajustes e Personalização" e "Editar Dados do Carro".
+- ✅ Removida a configuração de "Tipo de Ponteiro" da tela "Ajustes e Personalização" (`app/(tabs)/configuracoes.tsx`). Now is managed exclusively in the vehicle creation/editing screen.
+- **Status**: Corrigido ✅
+
+**8. Erro de Rota e Inicialização do Banco de Dados:**
+- ❌ `WARN [Layout children]: No route named "manutencao-historico" exists in nested children`
+- ❌ `ERROR Erro ao criar tabelas: [TypeError: Cannot read property 'some' of undefined]`
+- ✅ Movidas as telas de manutenção para o diretório `app/(tabs)/`. 
+- ✅ Corrigido o acesso à propriedade `rows` na migração do banco de dados.
+- **Status**: Corrigido ✅
+
 ### Próximos passos:
-- **Configurações:** Implementar as opções de configuração do aplicativo na aba "Configurações".
-    - **Configurações Detalhadas:**
-        - **Título:** "Ajustes e Personalização"
-        - **Seção Dados do Veículo:**
-            - Exibir informações do veículo atual (ex: "Veículo Atual: Gol Bolinha", "Capacidade do Tanque: 45 Litros" - valores dinâmicos).
-            - **Botão:** "EDITAR DADOS DO CARRO" (deve navegar para a tela de edição do veículo).
-        - **Seção Consumo de Combustível:**
-            - **Pergunta:** "Qual a sua forma de acompanhamento preferida?"
-            - **Botões de Rádio:** "Consumo Aprendido", "Consumo Manual" (exibindo o valor manual atual, se houver).
-        - **Seção Preferências de Exibição:**
-            - **Pergunta:** "Tipo de Ponteiro de Combustível"
-            - **Botões de Rádio:** "Analógico (Ponteiro)", "Digital (Barra)"
-        - **Seção Funcionalidades Adicionais:**
-            - **Switch:** "Salvar Local do Abastecimento (GPS)" (Ativar | Desativar)
-            - **Switch:** "Lembrete de Calibragem de Pneus" (Ativar | Desativar)
-                - Se ativado, exibir: **Campo de Input:** "Lembrete a cada [30] dias."
-        - **Seção Opções de Dados:**
-            - **Botão:** "EXPORTAR MEU HISTÓRICO"
-            - **Botão:** "LIMPAR TODOS OS DADOS" (com aviso de confirmação).
+- ✅ **Configurações:** Implementadas as opções de configuração do aplicativo na aba "Configurações", incluindo salvamento automático e remoção de redundâncias.
 - **Manutenção Básica:** Desenvolver as funcionalidades de lembretes e histórico de manutenção.
-- **Relatórios Avançados:** Expandir a tela de relatórios com mais métricas e visualizações (ex: histórico em mapa).
+- ✅ **Relatórios Avançados:** Expandida a tela de relatórios com mais métricas e visualizações (ex: histórico em mapa).
 
 
 ## Critérios de Aceite

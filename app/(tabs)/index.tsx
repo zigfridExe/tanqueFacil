@@ -2,18 +2,74 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { router } from 'expo-router';
-import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
 import { useVeiculos } from '../../hooks/useVeiculos';
+import { veiculoService } from '../../services/veiculoService';
+import { VeiculoForm } from '../../types/veiculo';
 
 export default function HomeScreen() {
-  const { veiculos, loading } = useVeiculos();
-  
+  const { veiculos, loading, refreshVeiculos } = useVeiculos();
+  const veiculoPrincipal = veiculos.length > 0 ? veiculos[0] : null;
+
+  const [isCalibrationDue, setIsCalibrationDue] = useState(false);
+  const [daysUntilCalibration, setDaysUntilCalibration] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (veiculoPrincipal && veiculoPrincipal.lembreteCalibragem && veiculoPrincipal.frequenciaLembrete) {
+      const lastCalibrationDate = veiculoPrincipal.dataUltimaCalibragem ? new Date(veiculoPrincipal.dataUltimaCalibragem) : null;
+      const today = new Date();
+
+      if (lastCalibrationDate) {
+        const diffTime = Math.abs(today.getTime() - lastCalibrationDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const remainingDays = veiculoPrincipal.frequenciaLembrete - diffDays;
+
+        if (remainingDays <= 0) {
+          setIsCalibrationDue(true);
+          setDaysUntilCalibration(0); // Calibration is overdue
+        } else {
+          setIsCalibrationDue(false);
+          setDaysUntilCalibration(remainingDays);
+        }
+      } else {
+        // If no last calibration date, assume it's due immediately if reminder is enabled
+        setIsCalibrationDue(true);
+        setDaysUntilCalibration(0);
+      }
+    } else {
+      setIsCalibrationDue(false);
+      setDaysUntilCalibration(null);
+    }
+  }, [veiculoPrincipal]);
+
   const handleNavegarPara = (rota: string) => {
     router.push(rota);
   };
 
-  const veiculoPrincipal = veiculos.length > 0 ? veiculos[0] : null;
+  const handleCalibrarAgora = useCallback(async () => {
+    if (!veiculoPrincipal) return;
+
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    const veiculoForm: VeiculoForm = {
+      ...veiculoPrincipal,
+      capacidadeTanque: veiculoPrincipal.capacidadeTanque.toString(),
+      consumoManualGasolina: veiculoPrincipal.consumoManualGasolina.toString(),
+      consumoManualEtanol: veiculoPrincipal.consumoManualEtanol.toString(),
+      frequenciaLembrete: veiculoPrincipal.frequenciaLembrete.toString(),
+      dataUltimaCalibragem: formattedDate,
+    };
+
+    const result = await veiculoService.atualizar(veiculoPrincipal.id!, veiculoForm);
+    if (result.success) {
+      Alert.alert('Sucesso', 'Data da última calibragem atualizada!');
+      refreshVeiculos(); // Refresh data to update UI
+    } else {
+      Alert.alert('Erro', 'Não foi possível atualizar a data da calibragem.');
+    }
+  }, [veiculoPrincipal, refreshVeiculos]);
 
   return (
     <ThemedView style={styles.container}>
@@ -101,9 +157,18 @@ export default function HomeScreen() {
         {/* Lembretes */}
         <View style={styles.remindersSection}>
           <ThemedText style={styles.sectionTitle}>Lembretes</ThemedText>
-          <View style={styles.reminderCard}>
-            <ThemedText style={styles.reminderText}>🔧 Calibragem de pneus em 5 dias</ThemedText>
-          </View>
+          {veiculoPrincipal && veiculoPrincipal.lembreteCalibragem && (
+            <View style={styles.reminderCard}>
+              <ThemedText style={styles.reminderText}>
+                🔧 Calibragem de pneus: {isCalibrationDue ? 'Vencida!' : `Em ${daysUntilCalibration} dias`}
+              </ThemedText>
+              {isCalibrationDue && (
+                <TouchableOpacity style={styles.calibrateButton} onPress={handleCalibrarAgora}>
+                  <ThemedText style={styles.calibrateButtonText}>Calibrar Agora</ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           <View style={styles.reminderCard}>
             <ThemedText style={styles.reminderText}>⛽ Abastecimento recomendado em 2 dias</ThemedText>
           </View>
@@ -248,6 +313,18 @@ const styles = StyleSheet.create({
   reminderText: {
     fontSize: 16,
     color: '#856404',
+  },
+  calibrateButton: {
+    backgroundColor: Colors.light.tint,
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+    alignSelf: 'flex-end',
+  },
+  calibrateButtonText: {
+    color: Colors.light.background,
+    fontSize: 14,
+    fontWeight: '600',
   },
   statsSection: {
     marginBottom: 30,

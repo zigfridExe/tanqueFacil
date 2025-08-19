@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,10 +14,13 @@ import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Colors } from '../constants/Colors';
 import { useVeiculos } from '../hooks/useVeiculos';
-import { VeiculoForm } from '../types/veiculo';
+import { Veiculo, VeiculoForm } from '../types/veiculo';
 
 export default function VeiculoCadastro() {
-  const { criarVeiculo, loading, error } = useVeiculos();
+  const { veiculoId } = useLocalSearchParams();
+  const isEditing = !!veiculoId;
+  const { criarVeiculo, atualizarVeiculo, buscarVeiculoPorId, loading, error } = useVeiculos();
+
   const [form, setForm] = useState<VeiculoForm>({
     nome: '',
     capacidadeTanque: '',
@@ -27,7 +30,38 @@ export default function VeiculoCadastro() {
     salvarLocalizacao: false,
     lembreteCalibragem: false,
     frequenciaLembrete: '30',
+    dataUltimaCalibragem: new Date().toISOString().split('T')[0], // Initialize with current date
   });
+
+  const [currentVeiculo, setCurrentVeiculo] = useState<Veiculo | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchVeiculo = async () => {
+        if (isEditing && typeof veiculoId === 'string') {
+          const id = parseInt(veiculoId);
+          const veiculo = await buscarVeiculoPorId(id);
+          if (veiculo) {
+            setCurrentVeiculo(veiculo);
+            setForm({
+              nome: veiculo.nome,
+              capacidadeTanque: veiculo.capacidadeTanque.toString(),
+              consumoManualGasolina: veiculo.consumoManualGasolina.toString(),
+              consumoManualEtanol: veiculo.consumoManualEtanol.toString(),
+              tipoPonteiro: veiculo.tipoPonteiro,
+              salvarLocalizacao: veiculo.salvarLocalizacao,
+              lembreteCalibragem: veiculo.lembreteCalibragem,
+              frequenciaLembrete: veiculo.frequenciaLembrete.toString(),
+            });
+          } else {
+            Alert.alert('Erro', 'Veículo não encontrado.');
+            router.back();
+          }
+        }
+      };
+      fetchVeiculo();
+    }, [isEditing, veiculoId, buscarVeiculoPorId])
+  );
 
   const handleInputChange = (field: keyof VeiculoForm, value: string | boolean) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -55,22 +89,30 @@ export default function VeiculoCadastro() {
 
   const handleSalvar = async () => {
     if (validarFormulario()) {
-      const sucesso = await criarVeiculo(form);
+      let sucesso = false;
+      if (isEditing && currentVeiculo) {
+        sucesso = await atualizarVeiculo(currentVeiculo.id, form);
+      } else {
+        sucesso = await criarVeiculo(form);
+      }
+
       if (sucesso) {
         Alert.alert(
           'Sucesso!',
-          'Veículo cadastrado com sucesso!',
+          isEditing ? 'Veículo atualizado com sucesso!' : 'Veículo cadastrado com sucesso!',
           [{ text: 'OK', onPress: () => router.back() }]
         );
       } else {
-        Alert.alert('Erro', error || 'Erro ao cadastrar veículo');
+        Alert.alert('Erro', error || (isEditing ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo'));
       }
     }
   };
 
   return (
     <ThemedView style={styles.container}>
-
+      <View style={styles.header}>
+        <ThemedText style={styles.headerTitle}>{isEditing ? 'Editar Veículo' : 'Cadastrar Veículo'}</ThemedText>
+      </View>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Nome do Veículo */}
         <View style={styles.inputGroup}>

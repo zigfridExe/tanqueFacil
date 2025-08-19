@@ -21,15 +21,30 @@ export default function RelatoriosScreen() {
 
   const isLoading = loadingAbastecimentos || loadingVeiculos;
 
-  const resultadosConsumo = useMemo(() => {
+  const { resultadosConsumo, totalSpent, totalLiters, totalMileage, averageCostPerLiter } = useMemo(() => {
     if (isLoading || !veiculos.length) {
-      return [];
+      return {
+        resultadosConsumo: [],
+        totalSpent: 0,
+        totalLiters: 0,
+        totalMileage: 0,
+        averageCostPerLiter: 0,
+      };
     }
 
     const resultados: ConsumoMedioResultado[] = [];
+    let overallTotalSpent = 0;
+    let overallTotalLiters = 0;
+    let overallTotalMileage = 0; // This will be the sum of distances for each vehicle
 
     veiculos.forEach(veiculo => {
-      const abastecimentosDoVeiculo = abastecimentos.filter(ab => ab.veiculoId === veiculo.id);
+      const abastecimentosDoVeiculo = abastecimentos.filter(ab => ab.carroId === veiculo.id);
+
+      // Calculate overall metrics
+      abastecimentosDoVeiculo.forEach(ab => {
+        overallTotalSpent += ab.valorPago;
+        overallTotalLiters += ab.litros;
+      });
 
       if (abastecimentosDoVeiculo.length < 2) {
         resultados.push({
@@ -41,19 +56,14 @@ export default function RelatoriosScreen() {
         return;
       }
 
-      // Ordenar por quilometragem para garantir a sequência correta
       const abastecimentosOrdenados = [...abastecimentosDoVeiculo].sort((a, b) => a.quilometragem - b.quilometragem);
 
       const primeiroAbastecimento = abastecimentosOrdenados[0];
       const ultimoAbastecimento = abastecimentosOrdenados[abastecimentosOrdenados.length - 1];
 
-      const distanciaPercorrida = ultimoAbastecimento.quilometragem - primeiroAbastecimento.quilometragem;
+      const distanciaPercorrida = ultimoAbasteamento.quilometragem - primeiroAbastecimento.quilometragem;
+      overallTotalMileage += distanciaPercorrida; // Add to overall mileage
 
-      // Somar litros de todos os abastecimentos, exceto o primeiro (pois o primeiro KM já é o ponto de partida)
-      // Ou, mais precisamente, somar todos os litros entre o primeiro e o último registro de KM.
-      // Para simplificar, vamos somar todos os litros dos abastecimentos que contribuíram para a distância.
-      // Uma abordagem mais precisa seria somar os litros de todos os abastecimentos *após* o primeiro registro de KM.
-      // Para esta primeira versão, somaremos todos os litros dos abastecimentos ordenados.
       const totalLitros = abastecimentosOrdenados.reduce((sum, ab) => sum + ab.litros, 0);
 
       if (distanciaPercorrida <= 0 || totalLitros <= 0) {
@@ -76,7 +86,15 @@ export default function RelatoriosScreen() {
       });
     });
 
-    return resultados;
+    const overallAverageCostPerLiter = overallTotalLiters > 0 ? overallTotalSpent / overallTotalLiters : 0;
+
+    return {
+      resultadosConsumo: resultados,
+      totalSpent: overallTotalSpent,
+      totalLiters: overallTotalLiters,
+      totalMileage: overallTotalMileage,
+      averageCostPerLiter: overallAverageCostPerLiter,
+    };
   }, [abastecimentos, veiculos, isLoading]);
 
   const renderItem = ({ item }: { item: ConsumoMedioResultado }) => (
@@ -115,13 +133,37 @@ export default function RelatoriosScreen() {
           <ThemedText style={styles.emptyStateSubtext}>Registre abastecimentos para calcular o consumo.</ThemedText>
         </View>
       ) : (
-        <FlatList
-          data={resultadosConsumo}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.veiculoId.toString()}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
+        <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
+          {/* Seção de Consumo Médio por Veículo */}
+          <ThemedText style={styles.sectionTitle}>Consumo Médio por Veículo</ThemedText>
+          <FlatList
+            data={resultadosConsumo}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.veiculoId.toString()}
+            scrollEnabled={false} // Disable FlatList scrolling as it's inside a ScrollView
+          />
+
+          {/* Seção de Estatísticas Gerais */}
+          <ThemedText style={styles.sectionTitle}>Estatísticas Gerais</ThemedText>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <ThemedText style={styles.statValue}>R$ {totalSpent.toFixed(2)}</ThemedText>
+              <ThemedText style={styles.statLabel}>Gasto Total</ThemedText>
+            </View>
+            <View style={styles.statCard}>
+              <ThemedText style={styles.statValue}>{totalLiters.toFixed(2)} L</ThemedText>
+              <ThemedText style={styles.statLabel}>Litros Abastecidos</ThemedText>
+            </View>
+            <View style={styles.statCard}>
+              <ThemedText style={styles.statValue}>{totalMileage.toFixed(2)} km</ThemedText>
+              <ThemedText style={styles.statLabel}>Quilometragem Total</ThemedText>
+            </View>
+            <View style={styles.statCard}>
+              <ThemedText style={styles.statValue}>R$ {averageCostPerLiter.toFixed(2)}/L</ThemedText>
+              <ThemedText style={styles.statLabel}>Custo Médio por Litro</ThemedText>
+            </View>
+          </View>
+        </ScrollView>
       )}
     </ThemedView>
   );
@@ -204,5 +246,46 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     fontSize: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.light.text,
+    marginTop: 20,
+    marginBottom: 15,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  statCard: {
+    width: '48%',
+    backgroundColor: Colors.light.background,
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: Colors.light.text,
+    marginBottom: 5,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: Colors.light.text,
+    textAlign: 'center',
+    opacity: 0.8,
   },
 });
