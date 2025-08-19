@@ -266,6 +266,24 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 
 ### Próximos passos:
 - **Configurações:** Implementar as opções de configuração do aplicativo na aba "Configurações".
+    - **Configurações Detalhadas:**
+        - **Título:** "Ajustes e Personalização"
+        - **Seção Dados do Veículo:**
+            - Exibir informações do veículo atual (ex: "Veículo Atual: Gol Bolinha", "Capacidade do Tanque: 45 Litros" - valores dinâmicos).
+            - **Botão:** "EDITAR DADOS DO CARRO" (deve navegar para a tela de edição do veículo).
+        - **Seção Consumo de Combustível:**
+            - **Pergunta:** "Qual a sua forma de acompanhamento preferida?"
+            - **Botões de Rádio:** "Consumo Aprendido", "Consumo Manual" (exibindo o valor manual atual, se houver).
+        - **Seção Preferências de Exibição:**
+            - **Pergunta:** "Tipo de Ponteiro de Combustível"
+            - **Botões de Rádio:** "Analógico (Ponteiro)", "Digital (Barra)"
+        - **Seção Funcionalidades Adicionais:**
+            - **Switch:** "Salvar Local do Abastecimento (GPS)" (Ativar | Desativar)
+            - **Switch:** "Lembrete de Calibragem de Pneus" (Ativar | Desativar)
+                - Se ativado, exibir: **Campo de Input:** "Lembrete a cada [30] dias."
+        - **Seção Opções de Dados:**
+            - **Botão:** "EXPORTAR MEU HISTÓRICO"
+            - **Botão:** "LIMPAR TODOS OS DADOS" (com aviso de confirmação).
 - **Manutenção Básica:** Desenvolver as funcionalidades de lembretes e histórico de manutenção.
 - **Relatórios Avançados:** Expandir a tela de relatórios com mais métricas e visualizações (ex: histórico em mapa).
 
