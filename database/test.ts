@@ -1,20 +1,9 @@
-import * as SQLite from 'expo-sqlite';
+import getDb from './database';
 
-// Teste simples para verificar se o SQLite está funcionando
-export const testSQLite = async () => {
-  try {
-    const db = await SQLite.openDatabaseAsync('test.db');
-    await db.execAsync('PRAGMA journal_mode = WAL');
-    const row = await db.getFirstAsync<{ version: string }>('SELECT sqlite_version() as version');
-    if (row) {
-      console.log('SQLite OK! Versão:', row.version);
-      return true;
-    } else {
-      console.error('Erro: Não foi possível obter a versão do SQLite.');
-      return false;
-    }
-  } catch (error) {
-    console.error('Erro no SQLite:', error);
-    return false;
-  }
-};
+// Função utilitária para validar o funcionamento básico do SQLite
+export async function testSQLite(): Promise<boolean> {
+  const db = await getDb();
+  // Faz uma consulta simples
+  const row = await db.getFirstAsync<{ ok: number }>('SELECT 1 as ok');
+  return !!row && row.ok === 1;
+}
