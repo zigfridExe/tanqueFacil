@@ -1,9 +1,6 @@
-// SDK 53: usar a nova API async do expo-sqlite
-import * as SQLite from 'expo-sqlite';
+// Usar wrapper do DB para facilitar mock em testes e evitar efeitos de módulo
+import getDb from '../database/database';
 import { Abastecimento } from '../types/veiculo';
-
-// Abre o banco de dados de forma assíncrona
-const dbPromise = SQLite.openDatabaseAsync('tanqueFacil.db');
 
 export interface AbastecimentoForm {
   data: string;
@@ -23,7 +20,7 @@ export const abastecimentoService = {
   // Criar novo abastecimento
   async criarAbastecimento(abastecimento: AbastecimentoForm): Promise<boolean> {
     try {
-      const db = await dbPromise;
+      const db = await getDb();
       const result = await db.runAsync(
         `INSERT INTO Abastecimentos (
           data, quilometragem, litros, valorPago, precoPorLitro, 
@@ -55,7 +52,7 @@ export const abastecimentoService = {
   // Buscar abastecimentos por veículo
   async buscarAbastecimentosPorVeiculo(carroId: number): Promise<Abastecimento[]> {
     try {
-      const db = await dbPromise;
+      const db = await getDb();
       const rows = await db.getAllAsync<Abastecimento>(
         'SELECT * FROM Abastecimentos WHERE carroId = ? ORDER BY data DESC, quilometragem DESC;',
         [carroId]
@@ -70,7 +67,7 @@ export const abastecimentoService = {
   // Buscar todos os abastecimentos
   async buscarTodosAbastecimentos(): Promise<Abastecimento[]> {
     try {
-      const db = await dbPromise;
+      const db = await getDb();
       const rows = await db.getAllAsync<Abastecimento>('SELECT * FROM Abastecimentos ORDER BY data DESC, quilometragem DESC;');
       return rows;
     } catch (error) {
@@ -82,7 +79,7 @@ export const abastecimentoService = {
   // Atualizar abastecimento
   async atualizarAbastecimento(id: number, abastecimento: AbastecimentoForm): Promise<boolean> {
     try {
-      const db = await dbPromise;
+      const db = await getDb();
       const result = await db.runAsync(
         `UPDATE Abastecimentos SET 
           data = ?, quilometragem = ?, litros = ?, valorPago = ?, 
@@ -114,7 +111,7 @@ export const abastecimentoService = {
   // Excluir abastecimento
   async excluirAbastecimento(id: number): Promise<boolean> {
     try {
-      const db = await dbPromise;
+      const db = await getDb();
       const result = await db.runAsync('DELETE FROM Abastecimentos WHERE id = ?;', [id]);
       console.log('Abastecimento excluído com sucesso:', result.changes);
       return result.changes > 0;
