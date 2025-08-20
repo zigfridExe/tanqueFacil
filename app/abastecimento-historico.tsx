@@ -21,7 +21,7 @@ export default function AbastecimentoHistoricoScreen() {
     loading, 
     error, 
     excluirAbastecimento, 
-    carregarAbastecimentos,
+    refresh,
   } = useAbastecimentos();
 
   const handleExcluirAbastecimento = async (abastecimento: Abastecimento) => {
@@ -34,7 +34,7 @@ export default function AbastecimentoHistoricoScreen() {
           text: 'Excluir',
           style: 'destructive',
           onPress: async () => {
-            const sucesso = await excluirAbastecimento(abastecimento.id!);
+            const sucesso = await excluirAbastecimento(abastecimento.id!, abastecimento.carroId);
             if (!sucesso) {
               Alert.alert('Erro', error || 'Erro ao excluir o registro.');
             }
@@ -54,10 +54,10 @@ export default function AbastecimentoHistoricoScreen() {
           Combustível: {item.tipoCombustivel}
         </ThemedText>
         <ThemedText style={styles.cardDetalhes}>
-          Litros: {item.litros.toFixed(2)}L | Preço/L: R$ {item.precoLitro.toFixed(2)}
+          Litros: {item.litros.toFixed(2)}L | Preço/L: R$ {item.precoPorLitro.toFixed(2)}
         </ThemedText>
         <ThemedText style={styles.cardDetalhes}>
-          Valor Total: R$ {item.valorTotal.toFixed(2)}
+          Valor Total: R$ {item.valorPago.toFixed(2)}
         </ThemedText>
         <ThemedText style={styles.cardDetalhes}>
           KM: {item.quilometragem}
@@ -89,7 +89,7 @@ export default function AbastecimentoHistoricoScreen() {
       ) : error ? (
         <View style={styles.errorState}>
           <ThemedText style={styles.errorText}>{error}</ThemedText>
-          <TouchableOpacity style={styles.retryButton} onPress={carregarAbastecimentos}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refresh()}>
             <ThemedText style={styles.retryButtonText}>Tentar Novamente</ThemedText>
           </TouchableOpacity>
         </View>
@@ -109,7 +109,7 @@ export default function AbastecimentoHistoricoScreen() {
           refreshControl={
             <RefreshControl
               refreshing={loading}
-              onRefresh={carregarAbastecimentos}
+              onRefresh={() => refresh()}
               colors={[Colors.light.tint]}
             />
           }

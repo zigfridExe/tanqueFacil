@@ -44,6 +44,18 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
       FOREIGN KEY (carroId) REFERENCES Carro(id)
     );
   `);
+  // Migração: garantir coluna valorPago, usada pela aplicação, existe.
+  try {
+    const cols = await db.getAllAsync<{ name: string }>("PRAGMA table_info('Abastecimentos');");
+    const hasValorPago = cols.some((c) => c.name === 'valorPago');
+    if (!hasValorPago) {
+      await db.execAsync("ALTER TABLE Abastecimentos ADD COLUMN valorPago REAL;");
+      // Backfill: se existir valorTotal, copia para valorPago
+      await db.execAsync("UPDATE Abastecimentos SET valorPago = valorTotal WHERE valorPago IS NULL;");
+    }
+  } catch (e) {
+    console.warn('Aviso: falha ao migrar coluna valorPago:', (e as any)?.message || e);
+  }
   cachedDb = db;
   return db;
 }

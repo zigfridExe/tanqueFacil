@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
@@ -24,13 +25,13 @@ export default function GerenciamentoCombustivelScreen() {
     }
 
     veiculos.forEach(veiculo => {
-      const abastecimentosDoVeiculo = abastecimentos.filter(ab => ab.veiculoId === veiculo.id);
+      const abastecimentosDoVeiculo = abastecimentos.filter(ab => ab.carroId === veiculo.id);
 
       if (abastecimentosDoVeiculo.length >= 2) {
         const abastecimentosOrdenados = [...abastecimentosDoVeiculo].sort((a, b) => a.quilometragem - b.quilometragem);
         const primeiroAbastecimento = abastecimentosOrdenados[0];
         const ultimoAbastecimento = abastecimentosOrdenados[abastecimentosOrdenados.length - 1];
-        const distanciaPercorrida = ultimoAbasteamento.quilometragem - primeiroAbasteamento.quilometragem;
+        const distanciaPercorrida = ultimoAbastecimento.quilometragem - primeiroAbastecimento.quilometragem;
         const totalLitros = abastecimentosOrdenados.reduce((sum, ab) => sum + ab.litros, 0);
 
         if (distanciaPercorrida > 0 && totalLitros > 0) {
@@ -133,6 +134,49 @@ export default function GerenciamentoCombustivelScreen() {
             keyboardType="numeric"
             placeholderTextColor={Colors.light.text}
           />
+          <View style={styles.sliderRow}>
+            <ThemedText style={styles.sliderMinMax}>0%</ThemedText>
+            <View style={styles.sliderContainer}>
+              <Slider
+                style={styles.slider}
+                minimumValue={0}
+                maximumValue={100}
+                step={1}
+                minimumTrackTintColor={Colors.light.tint}
+                maximumTrackTintColor="#d3d3d3"
+                thumbTintColor={Colors.light.tint}
+                value={parseFloat(nivelCombustivelPercentual.replace(',', '.')) || 0}
+                onValueChange={(v: number) => setNivelCombustivelPercentual(String(Math.round(v)))}
+              />
+            </View>
+            <ThemedText style={styles.sliderMinMax}>100%</ThemedText>
+          </View>
+          <View style={styles.presetRow}>
+            {[
+              { label: '1/4', value: 25 },
+              { label: '1/3', value: 33 },
+              { label: '1/2', value: 50 },
+              { label: '3/4', value: 75 },
+              { label: '4/4', value: 100 },
+            ].map(({ label, value }) => {
+              const current = parseFloat(nivelCombustivelPercentual.replace(',', '.')) || 0;
+              const active = Math.round(current) === value;
+              return (
+                <TouchableOpacity
+                  key={label}
+                  style={[styles.presetButton, active && styles.presetButtonActive]}
+                  onPress={() => setNivelCombustivelPercentual(String(value))}
+                >
+                  <ThemedText style={[styles.presetButtonText, active && styles.presetButtonTextActive]}>
+                    {label}
+                  </ThemedText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {!!nivelCombustivelPercentual && (
+            <ThemedText style={styles.sliderValue}>{nivelCombustivelPercentual}%</ThemedText>
+          )}
         </View>
 
         {nivelCombustivelPercentual && veiculoAtual && consumosMedios[veiculoAtual.id!] && autonomia !== null && litrosParaEncher !== null ? (
@@ -251,6 +295,68 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: Colors.light.background,
     color: Colors.light.text,
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 10,
+  },
+  sliderContainer: {
+    flex: 1,
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  sliderMinMax: {
+    width: 40,
+    textAlign: 'center',
+    color: Colors.light.text,
+    opacity: 0.8,
+  },
+  slider: {
+    flex: 1,
+    height: 40,
+  },
+  presetRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+    justifyContent: 'space-between',
+  },
+  presetButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: Colors.light.tint,
+    borderRadius: 20,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    marginHorizontal: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  presetButtonActive: {
+    backgroundColor: Colors.light.tint,
+    borderColor: Colors.light.tint,
+    elevation: 3,
+  },
+  presetButtonText: {
+    color: Colors.light.tint,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  presetButtonTextActive: {
+    color: 'white',
+    fontWeight: '700',
+  },
+  sliderValue: {
+    marginTop: 6,
+    textAlign: 'right',
+    color: Colors.light.tint,
+    fontWeight: '600',
   },
   resultsContainer: {
     marginTop: 20,
