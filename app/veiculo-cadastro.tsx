@@ -1,5 +1,5 @@
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import React, { useState, useCallback, useEffect } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -39,23 +39,25 @@ export default function VeiculoCadastro() {
     useCallback(() => {
       const fetchVeiculo = async () => {
         if (isEditing && typeof veiculoId === 'string') {
-          const id = parseInt(veiculoId);
-          const veiculo = await buscarVeiculoPorId(id);
-          if (veiculo) {
-            setCurrentVeiculo(veiculo);
-            setForm({
-              nome: veiculo.nome,
-              capacidadeTanque: veiculo.capacidadeTanque.toString(),
-              consumoManualGasolina: veiculo.consumoManualGasolina.toString(),
-              consumoManualEtanol: veiculo.consumoManualEtanol.toString(),
-              tipoPonteiro: veiculo.tipoPonteiro,
-              salvarLocalizacao: veiculo.salvarLocalizacao,
-              lembreteCalibragem: veiculo.lembreteCalibragem,
-              frequenciaLembrete: veiculo.frequenciaLembrete.toString(),
-            });
-          } else {
-            Alert.alert('Erro', 'Veículo não encontrado.');
-            router.back();
+          const id = parseInt(veiculoId, 10);
+          if (!isNaN(id)) {
+            const veiculo = await buscarVeiculoPorId(id);
+            if (veiculo) {
+              setCurrentVeiculo(veiculo);
+              setForm({
+                nome: veiculo.nome,
+                capacidadeTanque: veiculo.capacidadeTanque.toString(),
+                consumoManualGasolina: veiculo.consumoManualGasolina.toString(),
+                consumoManualEtanol: veiculo.consumoManualEtanol.toString(),
+                tipoPonteiro: veiculo.tipoPonteiro,
+                salvarLocalizacao: veiculo.salvarLocalizacao,
+                lembreteCalibragem: veiculo.lembreteCalibragem,
+                frequenciaLembrete: veiculo.frequenciaLembrete.toString(),
+              });
+            } else {
+              Alert.alert('Erro', 'Veículo não encontrado.');
+              router.back();
+            }
           }
         }
       };
@@ -72,15 +74,15 @@ export default function VeiculoCadastro() {
       Alert.alert('Erro', 'Por favor, informe o nome do veículo');
       return false;
     }
-    if (!form.capacidadeTanque || parseFloat(form.capacidadeTanque) <= 0) {
+    if (!form.capacidadeTanque || parseFloat(form.capacidadeTanque.replace(',', '.')) <= 0) {
       Alert.alert('Erro', 'Por favor, informe a capacidade do tanque');
       return false;
     }
-    if (!form.consumoManualGasolina || parseFloat(form.consumoManualGasolina) <= 0) {
+    if (!form.consumoManualGasolina || parseFloat(form.consumoManualGasolina.replace(',', '.')) <= 0) {
       Alert.alert('Erro', 'Por favor, informe o consumo de gasolina');
       return false;
     }
-    if (!form.consumoManualEtanol || parseFloat(form.consumoManualEtanol) <= 0) {
+    if (!form.consumoManualEtanol || parseFloat(form.consumoManualEtanol.replace(',', '.')) <= 0) {
       Alert.alert('Erro', 'Por favor, informe o consumo de etanol');
       return false;
     }
@@ -88,23 +90,30 @@ export default function VeiculoCadastro() {
   };
 
   const handleSalvar = async () => {
-    if (validarFormulario()) {
-      let sucesso = false;
-      if (isEditing && currentVeiculo) {
-        sucesso = await atualizarVeiculo(currentVeiculo.id, form);
-      } else {
-        sucesso = await criarVeiculo(form);
-      }
+    if (!validarFormulario()) return;
 
-      if (sucesso) {
-        Alert.alert(
-          'Sucesso!',
-          isEditing ? 'Veículo atualizado com sucesso!' : 'Veículo cadastrado com sucesso!',
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
-      } else {
-        Alert.alert('Erro', error || (isEditing ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo'));
-      }
+    const dadosParaSalvar: VeiculoForm = {
+      ...form,
+      capacidadeTanque: form.capacidadeTanque.replace(',', '.'),
+      consumoManualGasolina: form.consumoManualGasolina.replace(',', '.'),
+      consumoManualEtanol: form.consumoManualEtanol.replace(',', '.'),
+    };
+
+    let sucesso = false;
+    if (isEditing && currentVeiculo && currentVeiculo.id !== undefined) {
+      sucesso = await atualizarVeiculo(currentVeiculo.id, dadosParaSalvar);
+    } else {
+      sucesso = await criarVeiculo(dadosParaSalvar);
+    }
+
+    if (sucesso) {
+      Alert.alert(
+        'Sucesso!',
+        isEditing ? 'Veículo atualizado com sucesso!' : 'Veículo cadastrado com sucesso!',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    } else {
+      Alert.alert('Erro', error || (isEditing ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo'));
     }
   };
 
@@ -362,4 +371,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-}); 
+});

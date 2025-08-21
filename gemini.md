@@ -300,3 +300,6 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 
 ---
 Este plano de ação global garante que Khypukamayuq atue como supervisor inteligente, potencializando o desenvolvimento e a organização do projeto.
+
+---
+**Aviso de Idioma:** Todas as respostas e interações devem ser em português.

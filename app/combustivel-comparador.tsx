@@ -17,8 +17,8 @@ import { Veiculo } from '../types/veiculo';
 
 export default function ComparadorCombustivelScreen() {
   const { veiculos, loading: loadingVeiculos } = useVeiculos();
-  const [precoGasolina, setPrecoGasolina] = useState('');
-  const [precoEtanol, setPrecoEtanol] = useState('');
+  const [precoGasolina, setPrecoGasolina] = useState<string>('');
+  const [precoEtanol, setPrecoEtanol] = useState<string>('');
   const [resultado, setResultado] = useState<string | null>(null);
 
   // Por simplicidade, usa o primeiro veículo da lista.
