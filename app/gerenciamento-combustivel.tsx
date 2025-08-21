@@ -191,17 +191,21 @@ export default function GerenciamentoCombustivelScreen() {
                   {(veiculoAtual.capacidadeTanque - ((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100)).toFixed(2)} L
                 </ThemedText>
               </View>
+              {consumosMedios[veiculoAtual.id!] && (
+                <>
+                  <View style={styles.resultItem}>
+                    <ThemedText style={styles.resultLabel}>Consumo Médio:</ThemedText>
+                    <ThemedText style={styles.resultValue}>{consumosMedios[veiculoAtual.id!].toFixed(2)} km/L</ThemedText>
+                  </View>
+                  <View style={styles.resultItem}>
+                    <ThemedText style={styles.resultLabel}>Autonomia Restante:</ThemedText>
+                    <ThemedText style={styles.resultValue}>
+                      {((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual) / 100) * consumosMedios[veiculoAtual.id!]).toFixed(2)} km
+                    </ThemedText>
+                  </View>
+                </>
+              )}
             </View>
-            
-            {consumosMedios[veiculoAtual.id!] && autonomia !== null && litrosParaEncher !== null && (
-              <View style={styles.infoCard}>
-                <ThemedText style={styles.infoCardTitle}>Informações Adicionais</ThemedText>
-                <View style={styles.resultItem}>
-                  <ThemedText style={styles.resultLabel}>Consumo Médio:</ThemedText>
-                  <ThemedText style={styles.resultValue}>{consumosMedios[veiculoAtual.id!].toFixed(2)} km/L</ThemedText>
-                </View>
-              </View>
-            )}
           </View>
         ) : (nivelCombustivelPercentual && veiculoAtual && !consumosMedios[veiculoAtual.id!]) ? (
           <View style={styles.resultsContainer}>
