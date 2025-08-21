@@ -3,6 +3,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
 import { useVeiculos } from '@/hooks/useVeiculos';
+import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -44,7 +45,7 @@ export default function GerenciamentoCombustivelScreen() {
 
   const veiculoAtual = useMemo(() => {
     if (veiculoSelecionado) {
-      return veiculos.find(v => v.id === veiculoSelecionado);
+      return veiculos.find(v => v.id === veiculoSelecionado) || null;
     } else if (veiculos.length > 0) {
       // Seleciona o primeiro veículo por padrão se nenhum for explicitamente selecionado
       return veiculos[0];
@@ -53,7 +54,7 @@ export default function GerenciamentoCombustivelScreen() {
   }, [veiculos, veiculoSelecionado]);
 
   const autonomia = useMemo(() => {
-    if (!veiculoAtual || !nivelCombustivelPercentual || !consumosMedios[veiculoAtual.id!]) {
+    if (!veiculoAtual || !nivelCombustivelPercentual || !veiculoAtual.id || !consumosMedios[veiculoAtual.id]) {
       return null;
     }
     const percentual = parseFloat(nivelCombustivelPercentual.replace(',', '.')) / 100;
@@ -62,7 +63,7 @@ export default function GerenciamentoCombustivelScreen() {
     }
 
     const litrosRestantes = veiculoAtual.capacidadeTanque * percentual;
-    const consumoMedio = consumosMedios[veiculoAtual.id!];
+    const consumoMedio = consumosMedios[veiculoAtual.id];
 
     return litrosRestantes * consumoMedio;
   }, [veiculoAtual, nivelCombustivelPercentual, consumosMedios]);
@@ -116,8 +117,8 @@ export default function GerenciamentoCombustivelScreen() {
             <ThemedText style={styles.infoCardTitle}>Veículo Selecionado:</ThemedText>
             <ThemedText style={styles.infoCardContent}>{veiculoAtual.nome}</ThemedText>
             <ThemedText style={styles.infoCardContent}>Capacidade do Tanque: {veiculoAtual.capacidadeTanque} L</ThemedText>
-            {consumosMedios[veiculoAtual.id!] ? (
-              <ThemedText style={styles.infoCardContent}>Consumo Médio: {consumosMedios[veiculoAtual.id!].toFixed(2)} km/L</ThemedText>
+            {veiculoAtual.id && consumosMedios[veiculoAtual.id] ? (
+              <ThemedText style={styles.infoCardContent}>Consumo Médio: {consumosMedios[veiculoAtual.id].toFixed(2)} km/L</ThemedText>
             ) : (
               <ThemedText style={styles.infoCardContent}>Consumo Médio: Não calculado (necessita de abastecimentos)</ThemedText>
             )}
@@ -171,74 +172,74 @@ export default function GerenciamentoCombustivelScreen() {
           )}
         </View>
 
-        {nivelCombustivelPercentual && veiculoAtual ? (
-          <View style={styles.resultsContainer}>
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.infoCardTitle}>Nível Atual do Tanque</ThemedText>
-              <View style={styles.resultItem}>
-                <ThemedText style={styles.resultLabel}>Porcentagem:</ThemedText>
-                <ThemedText style={styles.resultValue}>{nivelCombustivelPercentual}%</ThemedText>
-              </View>
-              <View style={styles.resultItem}>
-                <ThemedText style={styles.resultLabel}>Litros Restantes:</ThemedText>
-                <ThemedText style={styles.resultValue}>
-                  {((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100).toFixed(2)} L
-                </ThemedText>
-              </View>
-              <View style={styles.resultItem}>
-                <ThemedText style={styles.resultLabel}>Litros para Encher:</ThemedText>
-                <ThemedText style={styles.resultValue}>
-                  {(veiculoAtual.capacidadeTanque - ((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100)).toFixed(2)} L
-                </ThemedText>
-              </View>
-              {consumosMedios[veiculoAtual.id!] && (
-                <>
-                  <View style={styles.resultItem}>
-                    <ThemedText style={styles.resultLabel}>Consumo Médio:</ThemedText>
-                    <ThemedText style={styles.resultValue}>{consumosMedios[veiculoAtual.id!].toFixed(2)} km/L</ThemedText>
-                  </View>
-                  <View style={styles.resultItem}>
-                    <ThemedText style={styles.resultLabel}>Autonomia Restante:</ThemedText>
-                    <ThemedText style={styles.resultValue}>
-                      {((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual) / 100) * consumosMedios[veiculoAtual.id!]).toFixed(2)} km
+        {/* O card de autonomia só será exibido se todas estas condições forem verdadeiras:
+            1. nivelCombustivelPercentual existe (não é nulo ou undefined)
+            2. veiculoAtual existe (um veículo foi selecionado/carregado)
+            3. consumosMedios[veiculoAtual.id!] existe (há um consumo médio calculado para o veículo)
+        */}
+        {/* Card de autonomia - Sempre visível quando há um veículo e nível de combustível definido */}
+        {nivelCombustivelPercentual && veiculoAtual && (
+          <View style={[styles.infoCard, { marginTop: 0 }]}>
+            <ThemedText style={styles.infoCardTitle}>Autonomia do Veículo</ThemedText>
+            
+            {veiculoAtual.id !== undefined && consumosMedios[veiculoAtual.id] ? (
+              // Mostra autonomia e consumo médio quando disponível
+              <>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="speed" size={20} color={Colors.light.tint} style={styles.infoIcon} />
+                  <View>
+                    <ThemedText style={styles.infoCardContent}>Autonomia Restante</ThemedText>
+                    <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
+                      {veiculoAtual.id !== undefined && ((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual) / 100) * consumosMedios[veiculoAtual.id]).toFixed(0)} km
                     </ThemedText>
                   </View>
-                </>
-              )}
-            </View>
-          </View>
-        ) : (nivelCombustivelPercentual && veiculoAtual && !consumosMedios[veiculoAtual.id!]) ? (
-          <View style={styles.resultsContainer}>
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.infoCardTitle}>Nível Atual do Tanque</ThemedText>
-              <View style={styles.resultItem}>
-                <ThemedText style={styles.resultLabel}>Porcentagem:</ThemedText>
-                <ThemedText style={styles.resultValue}>{nivelCombustivelPercentual}%</ThemedText>
-              </View>
-              <View style={styles.resultItem}>
-                <ThemedText style={styles.resultLabel}>Litros Restantes:</ThemedText>
-                <ThemedText style={styles.resultValue}>
-                  {((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100).toFixed(2)} L
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="local-gas-station" size={20} color={Colors.light.tint} style={styles.infoIcon} />
+                  <View>
+                    <ThemedText style={styles.infoCardContent}>Consumo Médio</ThemedText>
+                    <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
+                      {consumosMedios[veiculoAtual.id].toFixed(2)} km/L
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="water-drop" size={20} color={Colors.light.tint} style={styles.infoIcon} />
+                  <View>
+                    <ThemedText style={styles.infoCardContent}>Nível do Tanque</ThemedText>
+                    <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
+                      {nivelCombustivelPercentual}% ({((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100).toFixed(1)} L)
+                    </ThemedText>
+                  </View>
+                </View>
+              </>
+            ) : (
+              // Mensagem quando não há dados suficientes
+              <View style={styles.infoRow}>
+                <MaterialIcons name="info" size={20} color={Colors.light.tint} style={styles.infoIcon} />
+                <ThemedText style={styles.infoCardContent}>
+                  Adicione pelo menos 2 abastecimentos para calcular a autonomia.
                 </ThemedText>
               </View>
-              <View style={styles.resultItem}>
-                <ThemedText style={styles.resultLabel}>Litros para Encher:</ThemedText>
-                <ThemedText style={styles.resultValue}>
-                  {(veiculoAtual.capacidadeTanque - ((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100)).toFixed(2)} L
-                </ThemedText>
-              </View>
-            </View>
-            <View style={[styles.infoCard, { marginTop: 10 }]}>
-              <ThemedText style={styles.resultLabel}>Não foi possível calcular a autonomia. Verifique se o veículo possui consumo médio calculado.</ThemedText>
-            </View>
+            )}
           </View>
-        ) : null}
+        )}
 
         <TouchableOpacity 
-          style={[styles.button, { marginTop: 20, marginBottom: 40 }]}
-          onPress={() => router.push('/abastecimento-registro')}
+          style={[
+            styles.button, 
+            { 
+              marginTop: 20, 
+              marginBottom: 40,
+              opacity: veiculoAtual ? 1 : 0.5
+            }
+          ]}
+          onPress={() => veiculoAtual && router.push('/abastecimento-registro')}
+          disabled={!veiculoAtual}
         >
-          <ThemedText style={styles.buttonText}>Registrar Abastecimento</ThemedText>
+          <ThemedText style={styles.buttonText}>
+            {veiculoAtual ? 'Registrar Abastecimento' : 'Selecione um veículo'}
+          </ThemedText>
         </TouchableOpacity>
 
       </ScrollView>
@@ -322,6 +323,16 @@ const styles = StyleSheet.create({
   infoCardContent: {
     fontSize: 16,
     marginBottom: 4,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  infoIcon: {
+    marginRight: 12,
+    width: 24,
+    textAlign: 'center',
   },
   inputGroup: {
     marginBottom: 20,
@@ -413,25 +424,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  resultsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  resultItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  resultLabel: {
-    fontSize: 16,
-    color: Colors.light.text,
-  },
-  resultValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: Colors.light.tint,
   },
 });
