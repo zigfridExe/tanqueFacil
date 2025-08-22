@@ -285,6 +285,12 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - ✅ Corrigido o acesso à propriedade `rows` na migração do banco de dados.
 - **Status**: Corrigido ✅
 
+**9. Normalização de Inputs e Experiência do Usuário na Tela de Abastecimento:**
+- ✅ Implementada a normalização de campos de texto (data no formato DD/MM/AAAA, valores numéricos como float com vírgula).
+- ✅ Corrigido o problema de exibição de '0' nos campos numéricos ao carregar a tela, exibindo placeholders corretamente.
+- ✅ Adicionada `KeyboardAvoidingView` e `keyboardShouldPersistTaps="handled"` para evitar que o teclado cubra os campos de input.
+- **Status**: Concluído ✅
+
 ### Próximos passos:
 - ✅ **Configurações:** Implementadas as opções de configuração do aplicativo na aba "Configurações", incluindo salvamento automático e remoção de redundâncias.
 - **Manutenção Básica:** Desenvolver as funcionalidades de lembretes e histórico de manutenção.
