@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   TextInput,
   TouchableOpacity,
   View
@@ -15,6 +16,7 @@ import { ThemedView } from '../components/ThemedView';
 import { Colors } from '../constants/Colors';
 import { useAbastecimentos } from '../hooks/useAbastecimentos';
 import { AbastecimentoForm } from '../services/abastecimentoService';
+import { formatDate, formatDateToISO, formatNumberInput, parseNumberInput } from '../src/utils/format';
 
 export default function AbastecimentoRegistro() {
   const params = useLocalSearchParams();
@@ -33,33 +35,62 @@ export default function AbastecimentoRegistro() {
     carroId: carroId,
   });
 
+  const [dataExibicao, setDataExibicao] = useState(formatDate(form.data));
+  const [litrosExibicao, setLitrosExibicao] = useState('');
+  const [precoPorLitroExibicao, setPrecoPorLitroExibicao] = useState('');
+  const [valorPagoExibicao, setValorPagoExibicao] = useState('');
+  const [quilometragemExibicao, setQuilometragemExibicao] = useState('');
+
   useEffect(() => {
     if (carroId) {
       setForm(prev => ({ ...prev, carroId }));
     }
   }, [carroId]);
 
-  const handleInputChange = (field: keyof AbastecimentoForm, value: string | boolean | number) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+  const handleDateChange = (text: string) => {
+    const formatted = text.replace(/[^0-9]/g, '').slice(0, 8);
+    let final = formatted;
+    if (formatted.length > 2) {
+      final = `${formatted.slice(0, 2)}/${formatted.slice(2)}`;
+    }
+    if (formatted.length > 4) {
+      final = `${formatted.slice(0, 2)}/${formatted.slice(2, 4)}/${formatted.slice(4)}`;
+    }
+    setDataExibicao(final);
+
+    if (final.length === 10) {
+      setForm(prev => ({ ...prev, data: formatDateToISO(final) }));
+    }
+  };
+
+  const handleNumericChange = (
+    field: 'litros' | 'precoPorLitro' | 'valorPago' | 'quilometragem',
+    setterExibicao: React.Dispatch<React.SetStateAction<string>>
+  ) => (text: string) => {
+    const formatted = formatNumberInput(text);
+    setterExibicao(formatted);
+    setForm(prev => ({ ...prev, [field]: parseNumberInput(formatted) }));
   };
 
   const calcularPrecoPorLitro = () => {
     if (form.litros > 0 && form.valorPago > 0) {
-      const precoPorLitro = form.valorPago / form.litros;
-      setForm(prev => ({ ...prev, precoPorLitro: Math.round(precoPorLitro * 1000) / 1000 }));
+      const preco = form.valorPago / form.litros;
+      setForm(prev => ({ ...prev, precoPorLitro: preco }));
+      setPrecoPorLitroExibicao(preco.toFixed(3).replace('.', ','));
     }
   };
 
   const calcularValorTotal = () => {
     if (form.litros > 0 && form.precoPorLitro > 0) {
-      const valorTotal = form.litros * form.precoPorLitro;
-      setForm(prev => ({ ...prev, valorPago: Math.round(valorTotal * 100) / 100 }));
+      const valor = form.litros * form.precoPorLitro;
+      setForm(prev => ({ ...prev, valorPago: valor }));
+      setValorPagoExibicao(valor.toFixed(2).replace('.', ','));
     }
   };
 
   const validarFormulario = (): boolean => {
-    if (!form.data.trim()) {
-      Alert.alert('Erro', 'Por favor, informe a data do abastecimento');
+    if (!form.data.trim() || dataExibicao.length !== 10) {
+      Alert.alert('Erro', 'Por favor, informe uma data válida (DD/MM/AAAA)');
       return false;
     }
     if (form.quilometragem <= 0) {
@@ -84,7 +115,8 @@ export default function AbastecimentoRegistro() {
   const handleSalvar = async () => {
     if (validarFormulario()) {
       try {
-        const sucesso = await criarAbastecimento(form);
+        const finalForm = { ...form, data: formatDateToISO(dataExibicao) };
+        const sucesso = await criarAbastecimento(finalForm);
         if (sucesso) {
           Alert.alert(
             'Sucesso!',
@@ -102,19 +134,22 @@ export default function AbastecimentoRegistro() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.headerTitle}>Novo Abastecimento</ThemedText>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0} // Adjust as needed
+      >
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         {/* Data do Abastecimento */}
         <View style={styles.inputGroup}>
           <ThemedText style={styles.label}>Data do Abastecimento *</ThemedText>
           <TextInput
             style={styles.input}
-            value={form.data}
-            onChangeText={(value) => handleInputChange('data', value)}
-            placeholder="YYYY-MM-DD"
+            value={dataExibicao}
+            onChangeText={handleDateChange}
+            placeholder="DD/MM/AAAA"
+            keyboardType="numeric"
+            maxLength={10}
             placeholderTextColor={Colors.light.text}
           />
         </View>
@@ -124,8 +159,8 @@ export default function AbastecimentoRegistro() {
           <ThemedText style={styles.label}>Quilometragem Atual (km) *</ThemedText>
           <TextInput
             style={styles.input}
-            value={form.quilometragem.toString()}
-            onChangeText={(value) => handleInputChange('quilometragem', parseFloat(value) || 0)}
+            value={quilometragemExibicao}
+            onChangeText={handleNumericChange('quilometragem', setQuilometragemExibicao)}
             placeholder="Ex: 45000"
             keyboardType="numeric"
             placeholderTextColor={Colors.light.text}
@@ -141,7 +176,7 @@ export default function AbastecimentoRegistro() {
                 styles.radioButton,
                 form.tipoCombustivel === 'Gasolina' && styles.radioButtonSelected
               ]}
-              onPress={() => handleInputChange('tipoCombustivel', 'Gasolina')}
+              onPress={() => setForm(prev => ({ ...prev, tipoCombustivel: 'Gasolina' }))}
             >
               <ThemedText style={[
                 styles.radioText,
@@ -155,7 +190,7 @@ export default function AbastecimentoRegistro() {
                 styles.radioButton,
                 form.tipoCombustivel === 'Etanol' && styles.radioButtonSelected
               ]}
-              onPress={() => handleInputChange('tipoCombustivel', 'Etanol')}
+              onPress={() => setForm(prev => ({ ...prev, tipoCombustivel: 'Etanol' }))}
             >
               <ThemedText style={[
                 styles.radioText,
@@ -176,7 +211,7 @@ export default function AbastecimentoRegistro() {
                 styles.radioButton,
                 form.tipoTrajeto === 'Cidade' && styles.radioButtonSelected
               ]}
-              onPress={() => handleInputChange('tipoTrajeto', 'Cidade')}
+              onPress={() => setForm(prev => ({ ...prev, tipoTrajeto: 'Cidade' }))}
             >
               <ThemedText style={[
                 styles.radioText,
@@ -190,7 +225,7 @@ export default function AbastecimentoRegistro() {
                 styles.radioButton,
                 form.tipoTrajeto === 'Estrada' && styles.radioButtonSelected
               ]}
-              onPress={() => handleInputChange('tipoTrajeto', 'Estrada')}
+              onPress={() => setForm(prev => ({ ...prev, tipoTrajeto: 'Estrada' }))}
             >
               <ThemedText style={[
                 styles.radioText,
@@ -204,7 +239,7 @@ export default function AbastecimentoRegistro() {
                 styles.radioButton,
                 form.tipoTrajeto === 'Misto' && styles.radioButtonSelected
               ]}
-              onPress={() => handleInputChange('tipoTrajeto', 'Misto')}
+              onPress={() => setForm(prev => ({ ...prev, tipoTrajeto: 'Misto' }))}
             >
               <ThemedText style={[
                 styles.radioText,
@@ -221,10 +256,10 @@ export default function AbastecimentoRegistro() {
           <ThemedText style={styles.label}>Quantidade de Litros *</ThemedText>
           <TextInput
             style={styles.input}
-            value={form.litros.toString()}
-            onChangeText={(value) => handleInputChange('litros', parseFloat(value) || 0)}
-            placeholder="Ex: 45.5"
-            keyboardType="numeric"
+            value={litrosExibicao}
+            onChangeText={handleNumericChange('litros', setLitrosExibicao)}
+            placeholder="Ex: 45,5"
+            keyboardType="decimal-pad"
             placeholderTextColor={Colors.light.text}
             onBlur={calcularPrecoPorLitro}
           />
@@ -235,10 +270,10 @@ export default function AbastecimentoRegistro() {
           <ThemedText style={styles.label}>Preço por Litro (R$) *</ThemedText>
           <TextInput
             style={styles.input}
-            value={form.precoPorLitro.toString()}
-            onChangeText={(value) => handleInputChange('precoPorLitro', parseFloat(value) || 0)}
-            placeholder="Ex: 5.89"
-            keyboardType="numeric"
+            value={precoPorLitroExibicao}
+            onChangeText={handleNumericChange('precoPorLitro', setPrecoPorLitroExibicao)}
+            placeholder="Ex: 5,89"
+            keyboardType="decimal-pad"
             placeholderTextColor={Colors.light.text}
             onBlur={calcularValorTotal}
           />
@@ -249,23 +284,12 @@ export default function AbastecimentoRegistro() {
           <ThemedText style={styles.label}>Valor Total Pago (R$) *</ThemedText>
           <TextInput
             style={styles.input}
-            value={form.valorPago.toString()}
-            onChangeText={(value) => handleInputChange('valorPago', parseFloat(value) || 0)}
-            placeholder="Ex: 268.00"
-            keyboardType="numeric"
+            value={valorPagoExibicao}
+            onChangeText={handleNumericChange('valorPago', setValorPagoExibicao)}
+            placeholder="Ex: 268,00"
+            keyboardType="decimal-pad"
             placeholderTextColor={Colors.light.text}
             onBlur={calcularPrecoPorLitro}
-          />
-        </View>
-
-        {/* Calibragem de Pneus */}
-        <View style={styles.switchGroup}>
-          <ThemedText style={styles.label}>Calibragem de Pneus Realizada</ThemedText>
-          <Switch
-            value={form.calibragemPneus}
-            onValueChange={(value) => handleInputChange('calibragemPneus', value)}
-            trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-            thumbColor={form.calibragemPneus ? Colors.light.background : Colors.light.text}
           />
         </View>
 
@@ -288,6 +312,7 @@ export default function AbastecimentoRegistro() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
@@ -354,12 +379,6 @@ const styles = StyleSheet.create({
   radioTextSelected: {
     color: Colors.light.background,
     fontWeight: '600',
-  },
-  switchGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
   },
   buttonContainer: {
     flexDirection: 'row',

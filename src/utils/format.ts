@@ -13,6 +13,20 @@ export const formatPsi = (v: number) => `${Number(v ?? 0).toFixed(1)} psi`;
 
 export const formatDate = (dateString: string) => {
   if (!dateString) return '';
-  const [year, month, day] = dateString.split('-');
+  const [year, month, day] = dateString.split('T')[0].split('-');
   return `${day}/${month}/${year}`;
+};
+
+export const formatDateToISO = (date: string) => {
+  if (!date.includes('/')) return date;
+  const [day, month, year] = date.split('/');
+  return `${year}-${month}-${day}`;
+};
+
+export const formatNumberInput = (value: string) => {
+  return value.replace(/[^0-9,]/g, '').replace('2', '.');
+};
+
+export const parseNumberInput = (value: string) => {
+  return parseFloat(value.replace(',', '.')) || 0;
 };
