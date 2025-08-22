@@ -1,10 +1,9 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import FuelManagementCard from '@/components/gerenciamento/FuelManagementCard';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
 import { useVeiculos } from '@/hooks/useVeiculos';
-import { MaterialIcons } from '@expo/vector-icons';
-import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -14,11 +13,10 @@ export default function GerenciamentoCombustivelScreen() {
   const { abastecimentos, loading: loadingAbastecimentos } = useAbastecimentos();
 
   const [nivelCombustivelPercentual, setNivelCombustivelPercentual] = useState('50'); // Default to 50%
-  const [veiculoSelecionado, setVeiculoSelecionado] = useState<number | null>(null); // ID do veículo selecionado
+  const [veiculoSelecionado] = useState<number | null>(null); // ID do veículo selecionado O everton removeu o setVeiculoSelecionado
 
   const isLoading = loadingVeiculos || loadingAbastecimentos;
 
-  // Calcula o consumo médio para cada veículo (reutilizando lógica dos relatórios)
   const consumosMedios = useMemo(() => {
     const resultados: { [key: number]: number } = {};
     if (isLoading || !veiculos.length) {
@@ -47,7 +45,6 @@ export default function GerenciamentoCombustivelScreen() {
     if (veiculoSelecionado) {
       return veiculos.find(v => v.id === veiculoSelecionado) || null;
     } else if (veiculos.length > 0) {
-      // Seleciona o primeiro veículo por padrão se nenhum for explicitamente selecionado
       return veiculos[0];
     }
     return null;
@@ -109,237 +106,15 @@ export default function GerenciamentoCombustivelScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <ThemedText style={styles.headerTitle}>Gerenciamento de Combustível</ThemedText>
-
-        {/* Container principal para os cards */}
-        <View>
-          {/* Seleção de Veículo */}
-          {veiculoAtual && (
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.infoCardTitle}>Veículo Selecionado:</ThemedText>
-              <ThemedText style={styles.infoCardContent}>{veiculoAtual.nome}</ThemedText>
-              <ThemedText style={styles.infoCardContent}>Capacidade do Tanque: {veiculoAtual.capacidadeTanque} L</ThemedText>
-              {veiculoAtual.id && consumosMedios[veiculoAtual.id] ? (
-                <ThemedText style={styles.infoCardContent}>Consumo Médio: {consumosMedios[veiculoAtual.id].toFixed(2)} km/L</ThemedText>
-              ) : (
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="speed" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                  <View>
-                    <ThemedText style={styles.infoCardContent}>Dados de autonomia não disponíveis</ThemedText>
-                    <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>N/A</ThemedText>
-                  </View>
-                </View>
-              )}
-            </View>
-          )}
-
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Nível Atual do Tanque</ThemedText>
-            <View style={styles.sliderRow}>
-              <ThemedText style={styles.sliderMinMax}>0%</ThemedText>
-              <View style={styles.sliderContainer}>
-                <Slider
-                  style={styles.slider}
-                  minimumValue={0}
-                  maximumValue={100}
-                  step={1}
-                  minimumTrackTintColor={Colors.light.tint}
-                  maximumTrackTintColor="#d3d3d3"
-                  thumbTintColor={Colors.light.tint}
-                  value={parseFloat(nivelCombustivelPercentual.replace(',', '.')) || 0}
-                  onValueChange={(v: number) => setNivelCombustivelPercentual(String(Math.round(v)))}
-                />
-              </View>
-              <ThemedText style={styles.sliderMinMax}>100%</ThemedText>
-            </View>
-            <View style={styles.presetRow}>
-              {[
-                { label: '1/4', value: 25 },
-                { label: '1/3', value: 33 },
-                { label: '1/2', value: 50 },
-                { label: '3/4', value: 75 },
-                { label: '4/4', value: 100 },
-              ].map(({ label, value }) => {
-                const current = parseFloat(nivelCombustivelPercentual.replace(',', '.')) || 0;
-                const active = Math.round(current) === value;
-                return (
-                  <TouchableOpacity
-                    key={label}
-                    style={[styles.presetButton, active && styles.presetButtonActive]}
-                    onPress={() => setNivelCombustivelPercentual(String(value))}
-                  >
-                    <ThemedText style={[styles.presetButtonText, active && styles.presetButtonTextActive]}>
-                      {label}
-                    </ThemedText>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            {!!nivelCombustivelPercentual && (
-              <ThemedText style={styles.sliderValue}>{nivelCombustivelPercentual}%</ThemedText>
-            )}
-          </View>
-
-          {/* Card de autonomia - Sempre visível */}
-          <View style={[styles.infoCard, { marginTop: 0 }]}>
-            <ThemedText style={styles.infoCardTitle}>Autonomia do Veículo</ThemedText>
-            
-            {nivelCombustivelPercentual && veiculoAtual && veiculoAtual.id !== undefined && consumosMedios[veiculoAtual.id] ? (
-              // Mostra autonomia e consumo médio quando disponível
-              <>
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="speed" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                  <View>
-                    <ThemedText style={styles.infoCardContent}>Autonomia Restante</ThemedText>
-                    <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
-                      {((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual) / 100) * consumosMedios[veiculoAtual.id]).toFixed(0)} km
-                    </ThemedText>
-                  </View>
-                </View>
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="local-gas-station" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                  <View>
-                    <ThemedText style={styles.infoCardContent}>Consumo Médio</ThemedText>
-                    <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
-                      {consumosMedios[veiculoAtual.id].toFixed(2)} km/L
-                    </ThemedText>
-                  </View>
-                </View>
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="water-drop" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                  <View>
-                    <ThemedText style={styles.infoCardContent}>Nível do Tanque</ThemedText>
-                    <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
-                      {nivelCombustivelPercentual}% ({((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100).toFixed(1)} L)
-                    </ThemedText>
-                  </View>
-                </View>
-              </>
-            ) : (
-              // Mostra N/A quando não há dados suficientes
-              <View style={styles.infoRow}>
-                <MaterialIcons name="speed" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                <View>
-                  <ThemedText style={styles.infoCardContent}>Autonomia Restante</ThemedText>
-                  <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>N/A</ThemedText>
-                </View>
-              </View>
-            )}
-          </View>
-
-          <TouchableOpacity 
-            style={[
-              styles.button, 
-              { 
-                marginTop: 20, 
-                marginBottom: 40,
-                opacity: veiculoAtual ? 1 : 0.5
-              }
-            ]}
-            onPress={() => veiculoAtual && router.push('/abastecimento-registro')}
-            disabled={!veiculoAtual}
-          >
-            <ThemedText style={styles.buttonText}>
-              {veiculoAtual ? 'Registrar Abastecimento' : 'Selecione um veículo'}
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </ThemedView>
-  );
-          </View>
-          <View style={styles.presetRow}>
-            {[
-              { label: '1/4', value: 25 },
-              { label: '1/3', value: 33 },
-              { label: '1/2', value: 50 },
-              { label: '3/4', value: 75 },
-              { label: '4/4', value: 100 },
-            ].map(({ label, value }) => {
-              const current = parseFloat(nivelCombustivelPercentual.replace(',', '.')) || 0;
-              const active = Math.round(current) === value;
-              return (
-                <TouchableOpacity
-                  key={label}
-                  style={[styles.presetButton, active && styles.presetButtonActive]}
-                  onPress={() => setNivelCombustivelPercentual(String(value))}
-                >
-                  <ThemedText style={[styles.presetButtonText, active && styles.presetButtonTextActive]}>
-                    {label}
-                  </ThemedText>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          {!!nivelCombustivelPercentual && (
-            <ThemedText style={styles.sliderValue}>{nivelCombustivelPercentual}%</ThemedText>
-          )}
-        </View>
-
-        {/* Card de autonomia - Sempre visível */}
-        <View style={[styles.infoCard, { marginTop: 0 }]}>
-          <ThemedText style={styles.infoCardTitle}>Autonomia do Veículo</ThemedText>
-          
-          {nivelCombustivelPercentual && veiculoAtual && veiculoAtual.id !== undefined && consumosMedios[veiculoAtual.id] ? (
-            // Mostra autonomia e consumo médio quando disponível
-            <>
-              <View style={styles.infoRow}>
-                <MaterialIcons name="speed" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                <View>
-                  <ThemedText style={styles.infoCardContent}>Autonomia Restante</ThemedText>
-                  <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
-                    {((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual) / 100) * consumosMedios[veiculoAtual.id]).toFixed(0)} km
-                  </ThemedText>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <MaterialIcons name="local-gas-station" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                <View>
-                  <ThemedText style={styles.infoCardContent}>Consumo Médio</ThemedText>
-                  <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
-                    {consumosMedios[veiculoAtual.id].toFixed(2)} km/L
-                  </ThemedText>
-                </View>
-              </View>
-              <View style={styles.infoRow}>
-                <MaterialIcons name="water-drop" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-                <View>
-                  <ThemedText style={styles.infoCardContent}>Nível do Tanque</ThemedText>
-                  <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>
-                    {nivelCombustivelPercentual}% ({((veiculoAtual.capacidadeTanque * parseFloat(nivelCombustivelPercentual)) / 100).toFixed(1)} L)
-                  </ThemedText>
-                </View>
-              </View>
-            </>
-          ) : (
-            // Mostra N/A quando não há dados suficientes
-            <View style={styles.infoRow}>
-              <MaterialIcons name="speed" size={20} color={Colors.light.tint} style={styles.infoIcon} />
-              <View>
-                <ThemedText style={styles.infoCardContent}>Autonomia Restante</ThemedText>
-                <ThemedText style={[styles.infoCardContent, {fontWeight: 'bold'}]}>N/A</ThemedText>
-              </View>
-            </View>
-          )}
-        </View>
-
-        <TouchableOpacity 
-          style={[
-            styles.button, 
-            { 
-              marginTop: 20, 
-              marginBottom: 40,
-              opacity: veiculoAtual ? 1 : 0.5
-            }
-          ]}
-          onPress={() => veiculoAtual && router.push('/abastecimento-registro')}
-          disabled={!veiculoAtual}
-        >
-          <ThemedText style={styles.buttonText}>
-            {veiculoAtual ? 'Registrar Abastecimento' : 'Selecione um veículo'}
-          </ThemedText>
-        </TouchableOpacity>
-
+        <FuelManagementCard
+          veiculoAtual={veiculoAtual}
+          consumosMedios={consumosMedios}
+          nivelCombustivelPercentual={nivelCombustivelPercentual}
+          setNivelCombustivelPercentual={setNivelCombustivelPercentual}
+          autonomia={autonomia}
+          litrosParaEncher={litrosParaEncher}
+          onRegisterSupply={() => router.push('/abastecimento-registro')}
+        />
       </ScrollView>
     </ThemedView>
   );
@@ -348,18 +123,29 @@ export default function GerenciamentoCombustivelScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 16,
+    backgroundColor: '#f0f2f5',
   },
   scrollContainer: {
-    padding: 20,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: Colors.light.text,
-    textAlign: 'center',
     marginBottom: 20,
+    textAlign: 'center',
+    color: '#333',
+  },
+  button: {
+    backgroundColor: Colors.light.tint,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
   },
   loadingState: {
     flex: 1,
@@ -367,9 +153,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 16,
     fontSize: 16,
-    color: Colors.light.text,
   },
   emptyState: {
     flex: 1,
@@ -388,139 +173,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.7,
     marginBottom: 20,
-  },
-  button: {
-    backgroundColor: Colors.light.tint,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: Colors.light.background,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  infoCard: {
-    backgroundColor: Colors.light.card,
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    width: '100%',
-  },
-  infoCardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: Colors.light.tint,
-  },
-  infoCardContent: {
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  infoIcon: {
-    marginRight: 12,
-    width: 24,
-    textAlign: 'center',
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: Colors.light.text,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.light.tint,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: Colors.light.background,
-    color: Colors.light.text,
-  },
-  sliderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 10,
-  },
-  sliderContainer: {
-    flex: 1,
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  sliderMinMax: {
-    width: 40,
-    textAlign: 'center',
-    color: Colors.light.text,
-    opacity: 0.8,
-  },
-  slider: {
-    flex: 1,
-    height: 40,
-  },
-  presetRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-    justifyContent: 'space-between',
-  },
-  presetButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Colors.light.tint,
-    borderRadius: 20,
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    marginHorizontal: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 2,
-  },
-  presetButtonActive: {
-    backgroundColor: Colors.light.tint,
-    borderColor: Colors.light.tint,
-    elevation: 3,
-  },
-  presetButtonText: {
-    color: Colors.light.tint,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  presetButtonTextActive: {
-    color: 'white',
-    fontWeight: '700',
-  },
-  sliderValue: {
-    marginTop: 6,
-    textAlign: 'right',
-    color: Colors.light.tint,
-    fontWeight: '600',
-  },
-  resultsContainer: {
-    marginTop: 20,
-    padding: 20,
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
 });
