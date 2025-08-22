@@ -94,7 +94,7 @@ export default function AbastecimentoRegistro() {
         } else {
           Alert.alert('Erro', error || 'Erro ao registrar abastecimento');
         }
-      } catch (error) {
+      } catch {
         Alert.alert('Erro', 'Erro inesperado ao registrar abastecimento');
       }
     }

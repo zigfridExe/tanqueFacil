@@ -10,3 +10,9 @@ export const formatTelefoneBR = (digits: string) => {
 };
 
 export const formatPsi = (v: number) => `${Number(v ?? 0).toFixed(1)} psi`;
+
+export const formatDate = (dateString: string) => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
