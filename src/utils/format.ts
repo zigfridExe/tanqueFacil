@@ -24,7 +24,19 @@ export const formatDateToISO = (date: string) => {
 };
 
 export const formatNumberInput = (value: string) => {
-  return value.replace(/[^0-9,]/g, '').replace('2', '.');
+  // Allow digits, comma, and dot
+  let formattedValue = value.replace(/[^0-9.,]/g, '');
+
+  // Replace comma with dot for consistency
+  formattedValue = formattedValue.replace(/,/g, '.');
+
+  // Handle multiple dots: keep only the first one
+  const parts = formattedValue.split('.');
+  if (parts.length > 2) {
+    formattedValue = parts[0] + '.' + parts.slice(1).join('');
+  }
+
+  return formattedValue;
 };
 
 export const parseNumberInput = (value: string) => {

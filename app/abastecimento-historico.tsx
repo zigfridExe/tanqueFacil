@@ -1,13 +1,13 @@
-import { router } from 'expo-router';
-import React from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
@@ -15,14 +15,53 @@ import { Colors } from '../constants/Colors';
 import { useAbastecimentos } from '../hooks/useAbastecimentos';
 import { Abastecimento } from '../types/veiculo';
 
+// Componente do Card de Abastecimento
+const AbastecimentoCard = ({ item, onExcluir }: { item: Abastecimento, onExcluir: (item: Abastecimento) => void }) => (
+  <View style={styles.card}>
+    <View style={styles.cardInfo}>
+      <ThemedText style={styles.cardTitle}>
+        Data: {new Date(item.data).toLocaleDateString('pt-BR')}
+      </ThemedText>
+      <ThemedText style={styles.cardDetalhes}>
+        Combustível: {item.tipoCombustivel}
+      </ThemedText>
+      <ThemedText style={styles.cardDetalhes}>
+        Litros: {item.litros.toFixed(2)}L | Preço/L: R$ {item.precoPorLitro.toFixed(2)}
+      </ThemedText>
+      <ThemedText style={styles.cardDetalhes}>
+        Valor Total: R$ {item.valorPago.toFixed(2)}
+      </ThemedText>
+      <ThemedText style={styles.cardDetalhes}>
+        KM: {item.quilometragem}
+      </ThemedText>
+    </View>
+    
+    <View style={styles.cardAcoes}>
+      <TouchableOpacity
+        style={[styles.actionButton, styles.excluirButton]}
+        onPress={() => onExcluir(item)}
+      >
+        <ThemedText style={styles.actionButtonText}>Excluir</ThemedText>
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
 export default function AbastecimentoHistoricoScreen() {
   const { 
     abastecimentos, 
     loading, 
     error, 
     excluirAbastecimento, 
+    carregarTodosAbastecimentos,
     refresh,
   } = useAbastecimentos();
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarTodosAbastecimentos();
+    }, [carregarTodosAbastecimentos])
+  );
 
   const handleExcluirAbastecimento = async (abastecimento: Abastecimento) => {
     Alert.alert(
@@ -44,37 +83,6 @@ export default function AbastecimentoHistoricoScreen() {
     );
   };
 
-  const renderAbastecimento = ({ item }: { item: Abastecimento }) => (
-    <View style={styles.card}>
-      <View style={styles.cardInfo}>
-        <ThemedText style={styles.cardTitle}>
-          Data: {new Date(item.data).toLocaleDateString('pt-BR')}
-        </ThemedText>
-        <ThemedText style={styles.cardDetalhes}>
-          Combustível: {item.tipoCombustivel}
-        </ThemedText>
-        <ThemedText style={styles.cardDetalhes}>
-          Litros: {item.litros.toFixed(2)}L | Preço/L: R$ {item.precoPorLitro.toFixed(2)}
-        </ThemedText>
-        <ThemedText style={styles.cardDetalhes}>
-          Valor Total: R$ {item.valorPago.toFixed(2)}
-        </ThemedText>
-        <ThemedText style={styles.cardDetalhes}>
-          KM: {item.quilometragem}
-        </ThemedText>
-      </View>
-      
-      <View style={styles.cardAcoes}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.excluirButton]}
-          onPress={() => handleExcluirAbastecimento(item)}
-        >
-          <ThemedText style={styles.actionButtonText}>Excluir</ThemedText>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
@@ -89,7 +97,7 @@ export default function AbastecimentoHistoricoScreen() {
       ) : error ? (
         <View style={styles.errorState}>
           <ThemedText style={styles.errorText}>{error}</ThemedText>
-          <TouchableOpacity style={styles.retryButton} onPress={() => refresh()}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => carregarTodosAbastecimentos()}>
             <ThemedText style={styles.retryButtonText}>Tentar Novamente</ThemedText>
           </TouchableOpacity>
         </View>
@@ -102,14 +110,14 @@ export default function AbastecimentoHistoricoScreen() {
       ) : (
         <FlatList
           data={abastecimentos}
-          renderItem={renderAbastecimento}
+          renderItem={({ item }) => <AbastecimentoCard item={item} onExcluir={handleExcluirAbastecimento} />}
           keyExtractor={(item) => item.id?.toString() || '0'}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={loading}
-              onRefresh={() => refresh()}
+              onRefresh={carregarTodosAbastecimentos}
               colors={[Colors.light.tint]}
             />
           }
