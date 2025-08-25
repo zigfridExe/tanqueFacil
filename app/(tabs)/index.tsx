@@ -1,9 +1,12 @@
-import { ThemedText } from '@/components/ThemedText';
+import RemindersCard from '../../components/dashboard/RemindersCard';
+import VehicleStatusCard from '../../components/dashboard/VehicleStatusCard';
+import QuickActions from '../../components/dashboard/QuickActions';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { router } from 'expo-router';
 import React, { useState, useEffect, useCallback } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
 import { useVeiculos } from '../../hooks/useVeiculos';
 import { veiculoService } from '../../services/veiculoService';
 import { VeiculoForm } from '../../types/veiculo';
@@ -43,10 +46,6 @@ export default function HomeScreen() {
     }
   }, [veiculoPrincipal]);
 
-  const handleNavegarPara = (rota: string) => {
-    router.push(rota);
-  };
-
   const handleCalibrarAgora = useCallback(async () => {
     if (!veiculoPrincipal) return;
 
@@ -81,98 +80,16 @@ export default function HomeScreen() {
         </View>
 
         {/* Cards de Ação Rápida */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => handleNavegarPara('/gerenciamento-combustivel')}
-          >
-            <ThemedText style={styles.actionCardTitle}>⛽ Gerenciar</ThemedText>
-            <ThemedText style={styles.actionCardSubtitle}>Nível e Autonomia</ThemedText>
-          </TouchableOpacity>
+        <QuickActions />
 
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => handleNavegarPara('/abastecimento-registro')}
-          >
-            <ThemedText style={styles.actionCardTitle}>⛽ Abastecer</ThemedText>
-            <ThemedText style={styles.actionCardSubtitle}>Registrar</ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => handleNavegarPara('/combustivel-comparador')}
-          >
-            <ThemedText style={styles.actionCardTitle}>⚖️ Comparar</ThemedText>
-            <ThemedText style={styles.actionCardSubtitle}>Verificar Preços</ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => handleNavegarPara('/abastecimento-historico')}
-          >
-            <ThemedText style={styles.actionCardTitle}>📊 Histórico</ThemedText>
-            <ThemedText style={styles.actionCardSubtitle}>Ver registros</ThemedText>
-          </TouchableOpacity>
-        </View>
-
-                {/* Status do Veículo */}
-        <View style={styles.statusSection}>
-          <ThemedText style={styles.sectionTitle}>Status do Veículo</ThemedText>
-          {loading ? (
-            <View style={styles.loadingCard}>
-              <ActivityIndicator size="small" color={Colors.light.tint} />
-              <ThemedText style={styles.loadingText}>Carregando...</ThemedText>
-            </View>
-          ) : veiculoPrincipal ? (
-            <View style={styles.statusCard}>
-              <ThemedText style={styles.statusTitle}>{veiculoPrincipal.nome}</ThemedText>
-              <View style={styles.statusInfo}>
-                <View style={styles.statusItem}>
-                  <ThemedText style={styles.statusLabel}>Capacidade do Tanque</ThemedText>
-                  <ThemedText style={styles.statusValue}>{veiculoPrincipal.capacidadeTanque}L</ThemedText>
-                </View>
-                <View style={styles.statusItem}>
-                  <ThemedText style={styles.statusLabel}>Consumo Gasolina</ThemedText>
-                  <ThemedText style={styles.statusValue}>{veiculoPrincipal.consumoManualGasolina} km/L</ThemedText>
-                </View>
-                <View style={styles.statusItem}>
-                  <ThemedText style={styles.statusLabel}>Consumo Etanol</ThemedText>
-                  <ThemedText style={styles.statusValue}>{veiculoPrincipal.consumoManualEtanol} km/L</ThemedText>
-                </View>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.emptyCard}>
-              <ThemedText style={styles.emptyText}>Nenhum veículo cadastrado</ThemedText>
-              <TouchableOpacity 
-                style={styles.addFirstButton} 
-                onPress={() => handleNavegarPara('/veiculo-cadastro')}
-              >
-                <ThemedText style={styles.addFirstButtonText}>Cadastrar Primeiro Veículo</ThemedText>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+        {/* Status do Veículo */}
+        <VehicleStatusCard veiculos={veiculos} loading={loading} />
 
         {/* Lembretes */}
-        <View style={styles.remindersSection}>
-          <ThemedText style={styles.sectionTitle}>Lembretes</ThemedText>
-          {veiculoPrincipal && veiculoPrincipal.lembreteCalibragem && (
-            <View style={styles.reminderCard}>
-              <ThemedText style={styles.reminderText}>
-                🔧 Calibragem de pneus: {isCalibrationDue ? 'Vencida!' : `Em ${daysUntilCalibration} dias`}
-              </ThemedText>
-              {isCalibrationDue && (
-                <TouchableOpacity style={styles.calibrateButton} onPress={handleCalibrarAgora}>
-                  <ThemedText style={styles.calibrateButtonText}>Calibrar Agora</ThemedText>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-          <View style={styles.reminderCard}>
-            <ThemedText style={styles.reminderText}>⛽ Abastecimento recomendado em 2 dias</ThemedText>
-          </View>
-        </View>
+        <RemindersCard 
+          veiculos={veiculos} 
+          handleCalibrarAgora={handleCalibrarAgora} 
+        />
 
         {/* Estatísticas Rápidas */}
         <View style={styles.statsSection}>
@@ -226,141 +143,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     textAlign: 'center',
   },
-  quickActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  actionCard: {
-    width: '48%',
-    backgroundColor: Colors.light.tint,
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginHorizontal: '1%',
-    marginBottom: 15,
-  },
-  actionCardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.light.background,
-    marginBottom: 4,
-  },
-  actionCardSubtitle: {
-    fontSize: 14,
-    color: Colors.light.background,
-    opacity: 0.9,
-    textAlign: 'center',
-  },
-  statusSection: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.light.text,
-    marginBottom: 15,
-  },
-  statusCard: {
-    backgroundColor: Colors.light.background,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  statusTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.light.text,
-    marginBottom: 15,
-  },
-  statusInfo: {
-    gap: 12,
-  },
-  statusItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statusLabel: {
-    fontSize: 16,
-    color: Colors.light.text,
-    opacity: 0.8,
-  },
-  statusValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  remindersSection: {
-    marginBottom: 30,
-  },
-  reminderCard: {
-    backgroundColor: '#fff3cd',
-    borderColor: '#ffeaa7',
-    borderWidth: 1,
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  reminderText: {
-    fontSize: 16,
-    color: '#856404',
-  },
-  calibrateButton: {
-    backgroundColor: Colors.light.tint,
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 10,
-    alignSelf: 'flex-end',
-  },
-  calibrateButtonText: {
-    color: Colors.light.background,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  statsSection: {
-    marginBottom: 30,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 15,
-  },
-  statCard: {
-    width: '47%',
-    backgroundColor: Colors.light.background,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2.22,
-    elevation: 3,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.light.text,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: Colors.light.text,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
+  
   loadingCard: {
     backgroundColor: Colors.light.background,
     padding: 20,

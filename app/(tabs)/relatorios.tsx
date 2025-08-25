@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';

@@ -61,7 +61,7 @@ export default function AbastecimentoMapaScreen() {
       {abastecimentosComLocalizacao.length === 0 ? (
         <View style={styles.emptyContainer}>
           <ThemedText style={styles.emptyText}>Nenhum abastecimento com localização registrada.</ThemedText>
-          <ThemedText style={styles.emptyText}>Certifique-se de ativar "Salvar Local do Abastecimento (GPS)" nas configurações do veículo e registrar novos abastecimentos.</ThemedText>
+          <ThemedText style={styles.emptyText}>Certifique-se de ativar &quot;Salvar Local do Abastecimento (GPS)&quot; nas configurações do veículo e registrar novos abastecimentos.</ThemedText>
         </View>
       ) : (
         <MapView

@@ -24,24 +24,8 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
       salvarLocalizacao INTEGER,
       lembreteCalibragem INTEGER,
       frequenciaLembrete INTEGER,
-      dataUltimaCalibragem TEXT
-    );
-  `);
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS Abastecimentos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      carroId INTEGER NOT NULL,
-      data TEXT NOT NULL,
-      quilometragem REAL NOT NULL,
-      litros REAL NOT NULL,
-      precoPorLitro REAL NOT NULL,
-      valorTotal REAL NOT NULL,
-      tipoCombustivel TEXT NOT NULL,
-      tipoTrajeto TEXT,
-      calibragemPneus INTEGER,
-      latitude REAL,
-      longitude REAL,
-      FOREIGN KEY (carroId) REFERENCES Carro(id)
+      dataUltimaCalibragem TEXT,
+      exibirNoDashboard INTEGER DEFAULT 1
     );
   `);
   // Migração: garantir coluna valorPago, usada pela aplicação, existe.
@@ -56,6 +40,16 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
   } catch (e) {
     console.warn('Aviso: falha ao migrar coluna valorPago:', (e as any)?.message || e);
   }
+  // Migração: garantir coluna exibirNoDashboard existe na tabela Carro
+  try {
+    const cols = await db.getAllAsync<{ name: string }>("PRAGMA table_info('Carro');");
+    const hasExibirNoDashboard = cols.some((c) => c.name === 'exibirNoDashboard');
+    if (!hasExibirNoDashboard) {
+      await db.execAsync("ALTER TABLE Carro ADD COLUMN exibirNoDashboard INTEGER DEFAULT 1;");
+    }
+  } catch (e) {
+    console.warn('Aviso: falha ao migrar coluna exibirNoDashboard:', (e as any)?.message || e);
+  }
   cachedDb = db;
   return db;
 }
@@ -66,6 +60,19 @@ export async function initDatabase(): Promise<DatabaseResult> {
     return { success: true, message: 'Banco inicializado' };
   } catch (e: any) {
     return { success: false, message: e?.message || 'Falha ao inicializar banco' };
+  }
+}
+
+export async function resetDatabase(): Promise<DatabaseResult> {
+  try {
+    const db = await ensureDb();
+    await db.execAsync('DROP TABLE IF EXISTS Carro;');
+    await db.execAsync('DROP TABLE IF EXISTS Abastecimentos;');
+    cachedDb = null; // Clear cached DB to force re-initialization
+    await initDatabase();
+    return { success: true, message: 'Banco de dados redefinido com sucesso.' };
+  } catch (e: any) {
+    return { success: false, message: e?.message || 'Falha ao redefinir banco de dados.' };
   }
 }
 

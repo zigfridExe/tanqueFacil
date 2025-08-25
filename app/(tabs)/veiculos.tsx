@@ -111,7 +111,7 @@ export default function VeiculosScreen() {
             Nenhum veículo cadastrado ainda.
           </ThemedText>
           <ThemedText style={styles.emptyStateSubtext}>
-            Toque em "Adicionar" para cadastrar seu primeiro veículo.
+            Toque em &quot;Adicionar&quot; para cadastrar seu primeiro veículo.
           </ThemedText>
         </View>
       ) : (

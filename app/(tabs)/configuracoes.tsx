@@ -4,7 +4,7 @@ import { Colors } from '@/constants/Colors';
 import * as database from '@/database/database';
 import { useVeiculos } from '@/hooks/useVeiculos';
 import { veiculoService } from '@/services/veiculoService';
-import { VeiculoForm } from '@/types/veiculo';
+import { Veiculo, VeiculoForm } from '@/types/veiculo';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
@@ -17,6 +17,7 @@ export default function ConfiguracoesScreen() {
   const [salvarLocalizacao, setSalvarLocalizacao] = useState<boolean>(false);
   const [lembreteCalibragem, setLembreteCalibragem] = useState<boolean>(false);
   const [frequenciaLembrete, setFrequenciaLembrete] = useState<string>('30');
+  const [veiculosSelecionados, setVeiculosSelecionados] = useState<number[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -26,7 +27,9 @@ export default function ConfiguracoesScreen() {
         setLembreteCalibragem(veiculoAtual.lembreteCalibragem);
         setFrequenciaLembrete(veiculoAtual.frequenciaLembrete?.toString() || '30');
       }
-    }, [veiculoAtual])
+      const veiculosExibidos = veiculos.filter(v => v.exibirNoDashboard).map(v => v.id as number);
+      setVeiculosSelecionados(veiculosExibidos);
+    }, [veiculoAtual, veiculos])
   );
 
   const handleSave = useCallback(async () => {
@@ -41,15 +44,16 @@ export default function ConfiguracoesScreen() {
       salvarLocalizacao: salvarLocalizacao,
       lembreteCalibragem: lembreteCalibragem,
       frequenciaLembrete: frequenciaLembrete,
+      exibirNoDashboard: veiculosSelecionados.includes(veiculoAtual.id as number),
     };
 
-    const result = await veiculoService.atualizar(veiculoAtual.id, veiculoForm);
+    const result = await veiculoService.atualizar(veiculoAtual.id as number, veiculoForm);
     if (result.success) {
       refreshVeiculos();
     } else {
       Alert.alert('Erro', 'Não foi possível salvar as configurações.');
     }
-  }, [veiculoAtual, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, refreshVeiculos]);
+  }, [veiculoAtual, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, refreshVeiculos, veiculosSelecionados]);
 
   useEffect(() => {
     if (!veiculoAtual) return;
@@ -59,6 +63,12 @@ export default function ConfiguracoesScreen() {
 
     return () => clearTimeout(timer);
   }, [salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, handleSave, veiculoAtual]);
+
+  const handleToggleVeiculoDashboard = (id: number) => {
+    setVeiculosSelecionados(prev =>
+      prev.includes(id) ? prev.filter(veiculoId => veiculoId !== id) : [...prev, id]
+    );
+  };
 
   const handleResetData = () => {
     Alert.alert(
@@ -99,6 +109,21 @@ export default function ConfiguracoesScreen() {
 
         {veiculoAtual ? (
           <>
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Exibição no Dashboard</ThemedText>
+              {veiculos.map(veiculo => (
+                <View key={veiculo.id} style={styles.switchGroup}>
+                  <ThemedText style={styles.label}>{veiculo.nome}</ThemedText>
+                  <Switch
+                    value={veiculosSelecionados.includes(veiculo.id as number)}
+                    onValueChange={() => handleToggleVeiculoDashboard(veiculo.id as number)}
+                    trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+                    thumbColor={veiculosSelecionados.includes(veiculo.id as number) ? Colors.light.background : Colors.light.text}
+                  />
+                </View>
+              ))}
+            </View>
+
             <View style={styles.section}>
               <ThemedText style={styles.sectionTitle}>Dados do Veículo</ThemedText>
               <View>

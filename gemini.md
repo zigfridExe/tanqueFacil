@@ -315,3 +315,16 @@ Este plano de ação global garante que Khypukamayuq atue como supervisor inteli
 
 ---
 **Aviso de Idioma:** Todas as respostas e interações devem ser em português.
+
+## Erros e Lições Aprendidas com a IA
+
+### Erro: Uso incorreto do parâmetro `newContent` na ferramenta `replace`
+
+**Descrição:** Ao tentar usar a ferramenta `replace` para modificar o conteúdo de um arquivo, foi utilizado o parâmetro `newContent` em vez do parâmetro correto `new_string`. Isso resultou em um erro `[Operation Cancelled] Reason: User did not allow tool call` porque a ferramenta não reconheceu o parâmetro fornecido.
+
+**Solução:** Sempre utilize o parâmetro `new_string` para fornecer o conteúdo de substituição ao usar a ferramenta `replace`. O nome do parâmetro é `new_string`, não `newContent`.
+
+**Exemplo Correto:**
+```python
+print(default_api.replace(file_path = "caminho/do/arquivo.txt", old_string = "texto antigo", new_string = "novo texto"))
+```

@@ -169,5 +169,37 @@ export const abastecimentoService = {
       console.error('Erro ao calcular consumo médio:', error);
       return { gasolina: 0, etanol: 0 };
     }
-  }
+  },
+
+  async calcularEstatisticas(carroId?: number): Promise<any> {
+    try {
+      const db = await getDb();
+      let query = 'SELECT SUM(valorPago) as totalGastos, SUM(litros) as totalLitros, MIN(quilometragem) as kmInicial, MAX(quilometragem) as kmFinal FROM Abastecimentos';
+      const params = [];
+      if (carroId) {
+        query += ' WHERE carroId = ?';
+        params.push(carroId);
+      }
+
+      const result = await db.getFirstAsync<any>(query, params);
+
+      const kmTotal = result.kmFinal - result.kmInicial;
+      const consumoMedio = result.totalLitros > 0 ? kmTotal / result.totalLitros : 0;
+
+      return {
+        totalGastos: result.totalGastos || 0,
+        totalLitros: result.totalLitros || 0,
+        kmTotal: kmTotal || 0,
+        consumoMedio: consumoMedio || 0,
+      };
+    } catch (error) {
+      console.error('Erro ao calcular estatísticas:', error);
+      return {
+        totalGastos: 0,
+        totalLitros: 0,
+        kmTotal: 0,
+        consumoMedio: 0,
+      };
+    }
+  },
 };
