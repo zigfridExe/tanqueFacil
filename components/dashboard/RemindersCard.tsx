@@ -4,6 +4,12 @@ import { Veiculo } from '@/types/veiculo';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
+interface ReminderItem {
+  id: number;
+  text: string;
+  isDue: boolean;
+}
+
 interface RemindersCardProps {
   veiculos: Veiculo[];
   handleCalibrarAgora: (id: number) => void;
@@ -48,7 +54,7 @@ const RemindersCard: React.FC<RemindersCardProps> = ({ veiculos, handleCalibrarA
       };
     }
     return null;
-  }).filter(Boolean);
+  }).filter(Boolean) as ReminderItem[];
 
   return (
     <View style={styles.remindersSection}>
@@ -96,6 +102,20 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
+  },
+  emptyCard: {
+    backgroundColor: Colors.light.background,
+    borderColor: Colors.light.tint,
+    borderWidth: 1,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: Colors.light.text,
+    fontStyle: 'italic',
   },
   reminderText: {
     fontSize: 16,
