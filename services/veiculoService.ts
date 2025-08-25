@@ -14,6 +14,7 @@ export const veiculoService = {
         salvarLocalizacao: veiculoForm.salvarLocalizacao ? 1 : 0,
         lembreteCalibragem: veiculoForm.lembreteCalibragem ? 1 : 0,
         frequenciaLembrete: parseInt(veiculoForm.frequenciaLembrete),
+        // dataUltimaCalibragem will be handled separately or initialized by DB
       };
 
       try {
@@ -55,6 +56,7 @@ export const veiculoService = {
           salvarLocalizacao: row.salvarLocalizacao === 1,
           lembreteCalibragem: row.lembreteCalibragem === 1,
           frequenciaLembrete: row.frequenciaLembrete,
+          dataUltimaCalibragem: row.dataUltimaCalibragem, // Include dataUltimaCalibragem
         }));
         resolve({ success: true, message: 'Veículos buscados com sucesso', data: veiculos });
       } catch (error: any) {
@@ -80,6 +82,7 @@ export const veiculoService = {
             salvarLocalizacao: row.salvarLocalizacao === 1,
             lembreteCalibragem: row.lembreteCalibragem === 1,
             frequenciaLembrete: row.frequenciaLembrete,
+            dataUltimaCalibragem: row.dataUltimaCalibragem, // Include dataUltimaCalibragem
           };
           resolve({ success: true, message: 'Veículo encontrado', data: veiculo });
         } else {
@@ -103,6 +106,7 @@ export const veiculoService = {
         salvarLocalizacao: veiculoForm.salvarLocalizacao ? 1 : 0,
         lembreteCalibragem: veiculoForm.lembreteCalibragem ? 1 : 0,
         frequenciaLembrete: parseInt(veiculoForm.frequenciaLembrete),
+        dataUltimaCalibragem: veiculoForm.dataUltimaCalibragem || null, // Include dataUltimaCalibragem
       };
 
       try {
@@ -111,7 +115,7 @@ export const veiculoService = {
           `UPDATE Carro SET 
             nome = ?, capacidadeTanque = ?, consumoManualGasolina = ?, 
             consumoManualEtanol = ?, tipoPonteiro = ?, salvarLocalizacao = ?, 
-            lembreteCalibragem = ?, frequenciaLembrete = ?
+            lembreteCalibragem = ?, frequenciaLembrete = ?, dataUltimaCalibragem = ?
           WHERE id = ?`,
           veiculo.nome,
           veiculo.capacidadeTanque,
@@ -121,6 +125,7 @@ export const veiculoService = {
           veiculo.salvarLocalizacao,
           veiculo.lembreteCalibragem,
           veiculo.frequenciaLembrete,
+          veiculo.dataUltimaCalibragem,
           id,
         );
         if (result.changes > 0) {
@@ -130,6 +135,27 @@ export const veiculoService = {
         }
       } catch (error: any) {
         resolve({ success: false, message: 'Erro ao atualizar veículo: ' + error?.message });
+      }
+    });
+  },
+
+  // Add new function to update only dataUltimaCalibragem
+  async atualizarDataUltimaCalibragem(carroId: number, data: string): Promise<DatabaseResult> {
+    return new Promise(async (resolve) => {
+      try {
+        const db = await getDb();
+        const result = await db.runAsync(
+          `UPDATE Carro SET dataUltimaCalibragem = ? WHERE id = ?`,
+          data,
+          carroId,
+        );
+        if (result.changes > 0) {
+          resolve({ success: true, message: 'Data da última calibragem atualizada com sucesso' });
+        } else {
+          resolve({ success: false, message: 'Veículo não encontrado para atualizar a data da última calibragem' });
+        }
+      } catch (error: any) {
+        resolve({ success: false, message: 'Erro ao atualizar data da última calibragem: ' + error?.message });
       }
     });
   },
@@ -155,4 +181,4 @@ export const veiculoService = {
       }
     });
   },
-}; 
+};

@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,13 +16,22 @@ import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Colors } from '../constants/Colors';
 import { useAbastecimentos } from '../hooks/useAbastecimentos';
+import { useVeiculos } from '../hooks/useVeiculos';
 import { AbastecimentoForm } from '../services/abastecimentoService';
+import { veiculoService } from '../services/veiculoService';
+
 import { formatDate, formatDateToISO, formatNumberInput, parseNumberInput } from '../src/utils/format';
+import { Veiculo } from '../types/veiculo';
+
 
 export default function AbastecimentoRegistro() {
   const params = useLocalSearchParams();
   const carroId = params.carroId ? parseInt(params.carroId as string) : 0;
   const { criarAbastecimento, loading, error } = useAbastecimentos();
+  const { findVeiculoById } = useVeiculos();
+
+  const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
+  const [isModalVisible, setModalVisible] = useState(false);
   
   const [form, setForm] = useState<AbastecimentoForm>({
     data: new Date().toISOString().split('T')[0], // Data atual
@@ -44,8 +54,13 @@ export default function AbastecimentoRegistro() {
   useEffect(() => {
     if (carroId) {
       setForm(prev => ({ ...prev, carroId }));
+      const fetchVeiculo = async () => {
+        const veiculoEncontrado = await findVeiculoById(carroId);
+        setVeiculo(veiculoEncontrado || null);
+      };
+      fetchVeiculo();
     }
-  }, [carroId]);
+  }, [carroId, findVeiculoById]);
 
   const handleDateChange = (text: string) => {
     const formatted = text.replace(/[^0-9]/g, '').slice(0, 8);
@@ -112,25 +127,43 @@ export default function AbastecimentoRegistro() {
     return true;
   };
 
-  const handleSalvar = async () => {
+  const showCalibrationModal = () => {
     if (validarFormulario()) {
-      try {
-        const finalForm = { ...form, data: formatDateToISO(dataExibicao) };
-        const sucesso = await criarAbastecimento(finalForm);
-        if (sucesso) {
-          Alert.alert(
-            'Sucesso!',
-            'Abastecimento registrado com sucesso!',
-            [{ text: 'OK', onPress: () => router.back() }]
-          );
-        } else {
-          Alert.alert('Erro', error || 'Erro ao registrar abastecimento');
-        }
-      } catch {
-        Alert.alert('Erro', 'Erro inesperado ao registrar abastecimento');
+      if (veiculo?.lembreteCalibragem) {
+        setModalVisible(true);
+      } else {
+        proceedToSave(false);
       }
     }
   };
+
+  const proceedToSave = async (calibragemRealizada: boolean) => {
+    setModalVisible(false);
+    try {
+      const finalForm = { 
+        ...form, 
+        data: formatDateToISO(dataExibicao),
+        calibragemPneus: calibragemRealizada,
+      };
+      const sucesso = await criarAbastecimento(finalForm);
+      
+      if (sucesso) {
+        if (calibragemRealizada && veiculo) {
+          await veiculoService.atualizarDataUltimaCalibragem(veiculo.id, new Date().toISOString());
+        }
+        Alert.alert(
+          'Sucesso!',
+          'Abastecimento registrado com sucesso!',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+      } else {
+        Alert.alert('Erro', error || 'Erro ao registrar abastecimento');
+      }
+    } catch {
+      Alert.alert('Erro', 'Erro inesperado ao registrar abastecimento');
+    }
+  };
+
 
   return (
     <ThemedView style={styles.container}>
@@ -301,7 +334,7 @@ export default function AbastecimentoRegistro() {
           
           <TouchableOpacity 
             style={[styles.saveButton, loading && styles.saveButtonDisabled]} 
-            onPress={handleSalvar}
+            onPress={showCalibrationModal}
             disabled={loading}
           >
             {loading ? (
@@ -313,6 +346,35 @@ export default function AbastecimentoRegistro() {
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={isModalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <ThemedText style={styles.modalTitle}>Calibragem dos Pneus</ThemedText>
+            <ThemedText style={styles.modalMessage}>
+              Você aproveitou a parada para calibrar os pneus?
+            </ThemedText>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => proceedToSave(false)}
+              >
+                <ThemedText style={styles.modalButtonTextSecondary}>Deixar para depois</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={() => proceedToSave(true)}
+              >
+                <ThemedText style={styles.modalButtonTextPrimary}>Sim, calibrei!</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -412,5 +474,69 @@ const styles = StyleSheet.create({
     color: Colors.light.background,
     fontSize: 18,
     fontWeight: '600',
+  },
+  // Estilos do Modal
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: Colors.light.background,
+    borderRadius: 15,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 22,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  modalButtonPrimary: {
+    backgroundColor: Colors.light.tint,
+  },
+  modalButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.light.tint,
+  },
+  modalButtonTextPrimary: {
+    color: Colors.light.background,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalButtonTextSecondary: {
+    color: Colors.light.tint,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

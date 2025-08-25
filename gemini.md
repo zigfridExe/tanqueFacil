@@ -291,6 +291,12 @@ Controlar, monitorar e otimizar o desenvolvimento do projeto "Meu Tanque Fácil"
 - ✅ Adicionada `KeyboardAvoidingView` e `keyboardShouldPersistTaps="handled"` para evitar que o teclado cubra os campos de input.
 - **Status**: Concluído ✅
 
+**10. Implementação do Modal de Calibragem:**
+- ✅ Adicionado modal para perguntar sobre a calibragem dos pneus ao salvar um abastecimento.
+- ✅ Corrigida a importação do `veiculoService`.
+- ✅ Corrigida a chamada da função `atualizarDataUltimaCalibragem`.
+- **Status**: Concluído ✅
+
 ### Próximos passos:
 - ✅ **Configurações:** Implementadas as opções de configuração do aplicativo na aba "Configurações", incluindo salvamento automático e remoção de redundâncias.
 - **Manutenção Básica:** Desenvolver as funcionalidades de lembretes e histórico de manutenção.
