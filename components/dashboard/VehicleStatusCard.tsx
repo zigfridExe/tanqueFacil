@@ -14,7 +14,7 @@ const VehicleStatusCard: React.FC<VehicleStatusCardProps> = ({ veiculos, loading
   const veiculosExibidos = veiculos.filter(v => v.exibirNoDashboard);
 
   const handleNavegarPara = (rota: string) => {
-    router.push(rota);
+    router.push(rota as any);
   };
 
   return (
