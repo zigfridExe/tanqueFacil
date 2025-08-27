@@ -28,6 +28,25 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
       exibirNoDashboard INTEGER DEFAULT 1
     );
   `);
+
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS Abastecimentos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data TEXT NOT NULL,
+      quilometragem REAL NOT NULL,
+      litros REAL NOT NULL,
+      valorPago REAL NOT NULL,
+      precoPorLitro REAL NOT NULL,
+      tipoCombustivel TEXT NOT NULL,
+      tipoTrajeto TEXT NOT NULL,
+      calibragemPneus INTEGER NOT NULL,
+      latitude REAL,
+      longitude REAL,
+      carroId INTEGER NOT NULL,
+      FOREIGN KEY (carroId) REFERENCES Carro(id) ON DELETE CASCADE
+    );
+  `);
+
   // Migração: garantir coluna valorPago, usada pela aplicação, existe.
   try {
     const cols = await db.getAllAsync<{ name: string }>("PRAGMA table_info('Abastecimentos');");

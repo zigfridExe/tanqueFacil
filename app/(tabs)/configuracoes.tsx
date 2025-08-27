@@ -4,13 +4,13 @@ import { Colors } from '@/constants/Colors';
 import * as database from '@/database/database';
 import { useVeiculos } from '@/hooks/useVeiculos';
 import { veiculoService } from '@/services/veiculoService';
-import { Veiculo, VeiculoForm } from '@/types/veiculo';
+import { VeiculoForm } from '@/types/veiculo';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ConfiguracoesScreen() {
-  const { veiculos, refreshVeiculos } = useVeiculos();
+  const { veiculos, carregarVeiculos } = useVeiculos();
   const veiculoAtual = veiculos.length > 0 ? veiculos[0] : null;
 
   const [consumoType, setConsumoType] = useState<'aprendido' | 'manual'>('aprendido');
@@ -49,11 +49,11 @@ export default function ConfiguracoesScreen() {
 
     const result = await veiculoService.atualizar(veiculoAtual.id as number, veiculoForm);
     if (result.success) {
-      refreshVeiculos();
+      carregarVeiculos();
     } else {
       Alert.alert('Erro', 'Não foi possível salvar as configurações.');
     }
-  }, [veiculoAtual, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, refreshVeiculos, veiculosSelecionados]);
+  }, [veiculoAtual, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, carregarVeiculos, veiculosSelecionados]);
 
   useEffect(() => {
     if (!veiculoAtual) return;
@@ -83,7 +83,7 @@ export default function ConfiguracoesScreen() {
             try {
               await database.resetDatabase();
               Alert.alert('Sucesso', 'Todos os dados foram redefinidos.');
-              refreshVeiculos();
+              carregarVeiculos();
             } catch (error) {
               console.error('Erro ao redefinir dados:', error);
               Alert.alert('Erro', 'Não foi possível redefinir os dados.');

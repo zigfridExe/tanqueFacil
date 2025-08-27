@@ -28,7 +28,7 @@ export default function AbastecimentoRegistro() {
   const params = useLocalSearchParams();
   const carroId = params.carroId ? parseInt(params.carroId as string) : 0;
   const { criarAbastecimento, loading, error } = useAbastecimentos();
-  const { findVeiculoById } = useVeiculos();
+  const { buscarVeiculoPorId, veiculos, loading: loadingVeiculos } = useVeiculos();
 
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -55,12 +55,12 @@ export default function AbastecimentoRegistro() {
     if (carroId) {
       setForm(prev => ({ ...prev, carroId }));
       const fetchVeiculo = async () => {
-        const veiculoEncontrado = await findVeiculoById(carroId);
+        const veiculoEncontrado = await buscarVeiculoPorId(carroId);
         setVeiculo(veiculoEncontrado || null);
       };
       fetchVeiculo();
     }
-  }, [carroId, findVeiculoById]);
+  }, [carroId, buscarVeiculoPorId]);
 
   const handleDateChange = (text: string) => {
     const formatted = text.replace(/[^0-9]/g, '').slice(0, 8);
@@ -141,14 +141,13 @@ export default function AbastecimentoRegistro() {
     setModalVisible(false);
     try {
       const finalForm = { 
-        ...form, 
-        data: formatDateToISO(dataExibicao),
+        ...form,
         calibragemPneus: calibragemRealizada,
       };
       const sucesso = await criarAbastecimento(finalForm);
       
       if (sucesso) {
-        if (calibragemRealizada && veiculo) {
+        if (calibragemRealizada && veiculo && veiculo.id) {
           await veiculoService.atualizarDataUltimaCalibragem(veiculo.id, new Date().toISOString());
         }
         Alert.alert(
@@ -164,6 +163,27 @@ export default function AbastecimentoRegistro() {
     }
   };
 
+
+  if (loadingVeiculos) {
+    return (
+      <ThemedView style={[styles.container, styles.emptyState]}>
+        <ActivityIndicator size="large" color={Colors.light.tint} />
+      </ThemedView>
+    );
+  }
+
+  if (veiculos.length === 0) {
+    return (
+      <ThemedView style={[styles.container, styles.emptyState]}>
+        <ThemedText style={styles.emptyStateText}>
+          Você precisa ter um veículo cadastrado para registrar um abastecimento.
+        </ThemedText>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/veiculo-cadastro')}>
+          <ThemedText style={styles.buttonText}>Cadastrar Veículo</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -282,6 +302,14 @@ export default function AbastecimentoRegistro() {
               </ThemedText>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Comparador de Combustível */}
+        <View style={styles.inputGroup}>
+            <ThemedText style={styles.label}>Não sabe qual combustível usar?</ThemedText>
+            <TouchableOpacity style={styles.comparadorButton} onPress={() => router.push('/combustivel-comparador')}>
+                <ThemedText style={styles.comparadorButtonText}>⚖️ Comparar Gasolina vs. Etanol</ThemedText>
+            </TouchableOpacity>
         </View>
 
         {/* Quantidade de Litros */}
@@ -475,6 +503,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  comparadorButton: {
+    backgroundColor: 'transparent',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.light.tint,
+  },
+  comparadorButtonText: {
+    color: Colors.light.tint,
+    fontSize: 16,
+    fontWeight: '600',
+  },
   // Estilos do Modal
   modalContainer: {
     flex: 1,
@@ -538,5 +579,28 @@ const styles = StyleSheet.create({
     color: Colors.light.tint,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: Colors.light.tint,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: Colors.light.background,
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
