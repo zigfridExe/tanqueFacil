@@ -4,6 +4,7 @@ import { Colors } from '@/constants/Colors';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import QuickActions from '../../components/dashboard/QuickActions';
+import QuickStats from '../../components/dashboard/QuickStats';
 import RemindersCard from '../../components/dashboard/RemindersCard';
 import VehicleStatusCard from '../../components/dashboard/VehicleStatusCard';
 import { useVeiculos } from '../../hooks/useVeiculos';
@@ -93,27 +94,8 @@ export default function HomeScreen() {
         />
 
         {/* Estatísticas Rápidas */}
-        <View style={styles.statsSection}>
-          <ThemedText style={styles.sectionTitle}>Este Mês</ThemedText>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <ThemedText style={styles.statValue}>R$ 450</ThemedText>
-              <ThemedText style={styles.statLabel}>Gasto com Combustível</ThemedText>
-            </View>
-            <View style={styles.statCard}>
-              <ThemedText style={styles.statValue}>180L</ThemedText>
-              <ThemedText style={styles.statLabel}>Litros Abastecidos</ThemedText>
-            </View>
-            <View style={styles.statCard}>
-              <ThemedText style={styles.statValue}>2.100 km</ThemedText>
-              <ThemedText style={styles.statLabel}>Quilometragem</ThemedText>
-            </View>
-            <View style={styles.statCard}>
-              <ThemedText style={styles.statValue}>11.7 km/L</ThemedText>
-              <ThemedText style={styles.statLabel}>Consumo Médio</ThemedText>
-            </View>
-          </View>
-        </View>
+        <QuickStats />
+
       </ScrollView>
     </ThemedView>
   );
@@ -142,48 +124,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Colors.light.text,
     opacity: 0.8,
-    textAlign: 'center',
-  },
-  statsSection: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: Colors.light.text,
-    marginBottom: 15,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    backgroundColor: Colors.light.background,
-    padding: 15,
-    borderRadius: 12,
-    width: '48%', // Two columns with a small gap
-    marginBottom: 15,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.light.tint,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: Colors.light.text,
-    opacity: 0.8,
-    marginTop: 5,
     textAlign: 'center',
   },
   loadingCard: {
