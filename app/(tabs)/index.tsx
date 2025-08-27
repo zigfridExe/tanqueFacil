@@ -11,7 +11,7 @@ import { veiculoService } from '../../services/veiculoService';
 import { VeiculoForm } from '../../types/veiculo';
 
 export default function HomeScreen() {
-  const { veiculos, loading, refreshVeiculos } = useVeiculos();
+  const { veiculos, loading, carregarVeiculos } = useVeiculos();
   const veiculoPrincipal = veiculos.length > 0 ? veiculos[0] : null;
 
   const [isCalibrationDue, setIsCalibrationDue] = useState(false);
@@ -29,13 +29,13 @@ export default function HomeScreen() {
 
         if (remainingDays <= 0) {
           setIsCalibrationDue(true);
-          setDaysUntilCalibration(0); // Calibration is overdue
+          setDaysUntilCalibration(0); // A calibração está vencida
         } else {
           setIsCalibrationDue(false);
           setDaysUntilCalibration(remainingDays);
         }
       } else {
-        // If no last calibration date, assume it's due immediately if reminder is enabled
+        // Se não houver data da última calibração, assume-se que está vencida imediatamente se o lembrete estiver ativado
         setIsCalibrationDue(true);
         setDaysUntilCalibration(0);
       }
@@ -49,7 +49,7 @@ export default function HomeScreen() {
     if (!veiculoPrincipal) return;
 
     const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const formattedDate = today.toISOString().split('T')[0]; // AAAA-MM-DD
 
     const veiculoForm: VeiculoForm = {
       ...veiculoPrincipal,
@@ -63,22 +63,22 @@ export default function HomeScreen() {
     const result = await veiculoService.atualizar(veiculoPrincipal.id!, veiculoForm);
     if (result.success) {
       Alert.alert('Sucesso', 'Data da última calibragem atualizada!');
-      refreshVeiculos(); // Refresh data to update UI
+      carregarVeiculos(); // Atualiza os dados para atualizar a IU
     } else {
       Alert.alert('Erro', 'Não foi possível atualizar a data da calibragem.');
     }
-  }, [veiculoPrincipal, refreshVeiculos]);
+  }, [veiculoPrincipal, carregarVeiculos]);
 
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Header */}
+        {/* Cabeçalho */}
         <View style={styles.header}>
           <ThemedText style={styles.title}>Meu Tanque Fácil</ThemedText>
           <ThemedText style={styles.subtitle}>Controle total do seu combustível</ThemedText>
         </View>
 
-        {/* Cards de Ação Rápida */}
+        {/* Ações Rápidas */}
         <QuickActions />
 
         {/* Status do Veículo */}
@@ -87,7 +87,9 @@ export default function HomeScreen() {
         {/* Lembretes */}
         <RemindersCard 
           veiculos={veiculos} 
-          handleCalibrarAgora={handleCalibrarAgora} 
+          handleCalibrarAgora={handleCalibrarAgora}
+          isCalibrationDue={isCalibrationDue}
+          daysUntilCalibration={daysUntilCalibration}
         />
 
         {/* Estatísticas Rápidas */}
@@ -142,7 +144,48 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     textAlign: 'center',
   },
-  
+  statsSection: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: Colors.light.text,
+    marginBottom: 15,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    backgroundColor: Colors.light.background,
+    padding: 15,
+    borderRadius: 12,
+    width: '48%', // Two columns with a small gap
+    marginBottom: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.light.tint,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: Colors.light.text,
+    opacity: 0.8,
+    marginTop: 5,
+    textAlign: 'center',
+  },
   loadingCard: {
     backgroundColor: Colors.light.background,
     padding: 20,

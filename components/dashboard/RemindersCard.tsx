@@ -12,49 +12,35 @@ interface ReminderItem {
 
 interface RemindersCardProps {
   veiculos: Veiculo[];
-  handleCalibrarAgora: (id: number) => void;
+  handleCalibrarAgora: () => void; // Alterado para não receber id
+  isCalibrationDue: boolean;
+  daysUntilCalibration: number | null;
 }
 
-const RemindersCard: React.FC<RemindersCardProps> = ({ veiculos, handleCalibrarAgora }) => {
-  const getCalibrationInfo = (veiculo: Veiculo) => {
-    if (!veiculo.lembreteCalibragem) {
-      return { isDue: false, daysUntil: null }; // No reminder set
-    }
+const RemindersCard: React.FC<RemindersCardProps> = ({
+  veiculos,
+  handleCalibrarAgora,
+  isCalibrationDue,
+  daysUntilCalibration,
+}) => {
+  const veiculoPrincipal = veiculos.length > 0 ? veiculos[0] : null;
+  const reminders: ReminderItem[] = [];
 
-    const lastCalibration = veiculo.dataUltimaCalibragem ? new Date(veiculo.dataUltimaCalibragem) : null;
-    const today = new Date();
-    const frequency = veiculo.frequenciaLembrete || 30; // Default to 30 days if not set
-
-    if (!lastCalibration) {
-      return { isDue: true, daysUntil: 0 }; // No last calibration date, assume due immediately
-    }
-
-    const dueDate = new Date(lastCalibration);
-    dueDate.setDate(lastCalibration.getDate() + frequency);
-
-    const diffTime = dueDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return { isDue: diffDays <= 0, daysUntil: diffDays > 0 ? diffDays : 0 };
-  };
-
-  const reminders = veiculos.map(veiculo => {
-    const { isDue, daysUntil } = getCalibrationInfo(veiculo);
-    if (veiculo.lembreteCalibragem && isDue) {
-      return {
-        id: veiculo.id,
-        text: `🔧 Calibragem de pneus (${veiculo.nome}): Vencida!`, 
+  if (veiculoPrincipal && veiculoPrincipal.lembreteCalibragem) {
+    if (isCalibrationDue) {
+      reminders.push({
+        id: veiculoPrincipal.id,
+        text: `🔧 Calibragem de pneus (${veiculoPrincipal.nome}): Vencida!`,
         isDue: true,
-      };
-    } else if (veiculo.lembreteCalibragem && daysUntil !== null && daysUntil > 0) {
-      return {
-        id: veiculo.id,
-        text: `🔧 Calibragem de pneus (${veiculo.nome}): Em ${daysUntil} dias`, 
+      });
+    } else if (daysUntilCalibration !== null && daysUntilCalibration > 0) {
+      reminders.push({
+        id: veiculoPrincipal.id,
+        text: `🔧 Calibragem de pneus (${veiculoPrincipal.nome}): Em ${daysUntilCalibration} dias`,
         isDue: false,
-      };
+      });
     }
-    return null;
-  }).filter(Boolean) as ReminderItem[];
+  }
 
   return (
     <View style={styles.remindersSection}>
@@ -66,7 +52,7 @@ const RemindersCard: React.FC<RemindersCardProps> = ({ veiculos, handleCalibrarA
               {reminder.text}
             </ThemedText>
             {reminder.isDue && (
-              <TouchableOpacity style={styles.calibrateButton} onPress={() => handleCalibrarAgora(reminder.id as number)}>
+              <TouchableOpacity style={styles.calibrateButton} onPress={handleCalibrarAgora}>
                 <ThemedText style={styles.calibrateButtonText}>Calibrar Agora</ThemedText>
               </TouchableOpacity>
             )}
@@ -77,10 +63,6 @@ const RemindersCard: React.FC<RemindersCardProps> = ({ veiculos, handleCalibrarA
           <ThemedText style={styles.emptyText}>Nenhum lembrete pendente.</ThemedText>
         </View>
       )}
-      {/* Hardcoded reminder for now, will be dynamic later */}
-      <View style={styles.reminderCard}>
-        <ThemedText style={styles.reminderText}>⛽ Abastecimento recomendado em 2 dias</ThemedText>
-      </View>
     </View>
   );
 };
@@ -102,6 +84,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   emptyCard: {
     backgroundColor: Colors.light.background,
@@ -120,13 +105,14 @@ const styles = StyleSheet.create({
   reminderText: {
     fontSize: 16,
     color: '#856404',
+    flex: 1,
   },
   calibrateButton: {
     backgroundColor: Colors.light.tint,
-    padding: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    marginTop: 10,
-    alignSelf: 'flex-end',
+    marginLeft: 10,
   },
   calibrateButtonText: {
     color: Colors.light.background,
