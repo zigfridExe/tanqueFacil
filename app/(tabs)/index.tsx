@@ -1,12 +1,11 @@
-import RemindersCard from '../../components/dashboard/RemindersCard';
-import VehicleStatusCard from '../../components/dashboard/VehicleStatusCard';
-import QuickActions from '../../components/dashboard/QuickActions';
+import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
-import { router } from 'expo-router';
-import React, { useState, useEffect, useCallback } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import QuickActions from '../../components/dashboard/QuickActions';
+import RemindersCard from '../../components/dashboard/RemindersCard';
+import VehicleStatusCard from '../../components/dashboard/VehicleStatusCard';
 import { useVeiculos } from '../../hooks/useVeiculos';
 import { veiculoService } from '../../services/veiculoService';
 import { VeiculoForm } from '../../types/veiculo';

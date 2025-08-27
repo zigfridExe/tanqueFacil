@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Veiculo, VeiculoForm } from '../types/veiculo';
-import { veiculoService } from '../services/veiculoService';
 import { useVehicleStore } from '@src/store';
+import { useCallback, useEffect, useState } from 'react';
+import { veiculoService } from '../services/veiculoService';
+import { Veiculo, VeiculoForm } from '../types/veiculo';
 
 export const useVeiculos = () => {
   const { vehicles, setVehicles, addVehicle, updateVehicle, removeVehicle } = useVehicleStore();
