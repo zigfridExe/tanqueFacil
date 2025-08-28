@@ -47,30 +47,49 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
     );
   `);
 
-  // Migração: garantir coluna valorPago, usada pela aplicação, existe.
-  try {
-    const cols = await db.getAllAsync<{ name: string }>("PRAGMA table_info('Abastecimentos');");
-    const hasValorPago = cols.some((c) => c.name === 'valorPago');
-    if (!hasValorPago) {
-      await db.execAsync("ALTER TABLE Abastecimentos ADD COLUMN valorPago REAL;");
-      // Backfill: se existir valorTotal, copia para valorPago
-      await db.execAsync("UPDATE Abastecimentos SET valorPago = valorTotal WHERE valorPago IS NULL;");
-    }
-  } catch (e) {
-    console.warn('Aviso: falha ao migrar coluna valorPago:', (e as any)?.message || e);
-  }
-  // Migração: garantir coluna exibirNoDashboard existe na tabela Carro
-  try {
-    const cols = await db.getAllAsync<{ name: string }>("PRAGMA table_info('Carro');");
-    const hasExibirNoDashboard = cols.some((c) => c.name === 'exibirNoDashboard');
-    if (!hasExibirNoDashboard) {
-      await db.execAsync("ALTER TABLE Carro ADD COLUMN exibirNoDashboard INTEGER DEFAULT 1;");
-    }
-  } catch (e) {
-    console.warn('Aviso: falha ao migrar coluna exibirNoDashboard:', (e as any)?.message || e);
-  }
+  await runMigrations(db);
+
   cachedDb = db;
   return db;
+}
+
+type Migration = {
+  tableName: string;
+  columnName: string;
+  columnDefinition: string;
+  backfillQuery?: string;
+};
+
+const MIGRATIONS: Migration[] = [
+  {
+    tableName: 'Abastecimentos',
+    columnName: 'valorPago',
+    columnDefinition: 'REAL',
+    backfillQuery: 'UPDATE Abastecimentos SET valorPago = valorTotal WHERE valorPago IS NULL;',
+  },
+  {
+    tableName: 'Carro',
+    columnName: 'exibirNoDashboard',
+    columnDefinition: 'INTEGER DEFAULT 1',
+  },
+];
+
+async function runMigrations(db: SQLite.SQLiteDatabase) {
+  for (const migration of MIGRATIONS) {
+    try {
+      const cols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info('${migration.tableName}');`);
+      const columnExists = cols.some((c) => c.name === migration.columnName);
+      if (!columnExists) {
+        await db.execAsync(`ALTER TABLE ${migration.tableName} ADD COLUMN ${migration.columnName} ${migration.columnDefinition};`);
+        if (migration.backfillQuery) {
+          await db.execAsync(migration.backfillQuery);
+        }
+        console.log(`Migração bem-sucedida: Coluna ${migration.columnName} adicionada à tabela ${migration.tableName}.`);
+      }
+    } catch (e) {
+      console.warn(`Aviso: falha ao migrar coluna ${migration.columnName} na tabela ${migration.tableName}:`, (e as any)?.message || e);
+    }
+  }
 }
 
 export async function initDatabase(): Promise<DatabaseResult> {
