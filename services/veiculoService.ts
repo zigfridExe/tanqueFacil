@@ -5,7 +5,7 @@ export const veiculoService = {
   // Criar novo veículo
   async criar(veiculoForm: VeiculoForm): Promise<DatabaseResult> {
     return new Promise(async (resolve) => {
-      const veiculo: Omit<Veiculo, 'id'> = {
+      const veiculo = {
         nome: veiculoForm.nome,
         capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
         consumoManualGasolina: (veiculoForm.consumoManualGasolina && parseFloat(veiculoForm.consumoManualGasolina)) || null,
@@ -36,7 +36,20 @@ export const veiculoService = {
           veiculo.frequenciaLembrete,
           veiculo.exibirNoDashboard
         );
-        resolve({ success: true, message: 'Veículo criado com sucesso', data: { id: result.lastInsertRowId } });
+        
+        // Busca o veículo recém-criado para retornar todos os dados
+        const veiculoCriado = await db.getFirstAsync<any>('SELECT * FROM Carro WHERE id = ?', result.lastInsertRowId);
+        if (veiculoCriado) {
+          veiculoCriado.salvarLocalizacao = veiculoCriado.salvarLocalizacao === 1;
+          veiculoCriado.lembreteCalibragem = veiculoCriado.lembreteCalibragem === 1;
+          veiculoCriado.exibirNoDashboard = veiculoCriado.exibirNoDashboard === 1;
+        }
+        
+        resolve({ 
+          success: true, 
+          message: 'Veículo criado com sucesso', 
+          data: veiculoCriado 
+        });
       } catch (error: any) {
         resolve({ success: false, message: 'Erro ao criar veículo: ' + error?.message });
       }
@@ -102,7 +115,7 @@ export const veiculoService = {
   // Atualizar veículo
   async atualizar(id: number, veiculoForm: VeiculoForm): Promise<DatabaseResult> {
     return new Promise(async (resolve) => {
-      const veiculo: Omit<Veiculo, 'id'> = {
+      const veiculo = {
         nome: veiculoForm.nome,
         capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
         consumoManualGasolina: (veiculoForm.consumoManualGasolina && parseFloat(veiculoForm.consumoManualGasolina)) || null,
@@ -111,7 +124,7 @@ export const veiculoService = {
         salvarLocalizacao: veiculoForm.salvarLocalizacao ? 1 : 0,
         lembreteCalibragem: veiculoForm.lembreteCalibragem ? 1 : 0,
         frequenciaLembrete: parseInt(veiculoForm.frequenciaLembrete),
-        dataUltimaCalibragem: veiculoForm.dataUltimaCalibragem || undefined,
+        dataUltimaCalibragem: veiculoForm.dataUltimaCalibragem || null,
         exibirNoDashboard: veiculoForm.exibirNoDashboard ? 1 : 0,
       };
 
@@ -137,7 +150,18 @@ export const veiculoService = {
           id
         );
         if (result.changes > 0) {
-          resolve({ success: true, message: 'Veículo atualizado com sucesso' });
+          // Busca o veículo atualizado para retornar todos os dados
+          const veiculoAtualizado = await db.getFirstAsync<any>('SELECT * FROM Carro WHERE id = ?', id);
+          if (veiculoAtualizado) {
+            veiculoAtualizado.salvarLocalizacao = veiculoAtualizado.salvarLocalizacao === 1;
+            veiculoAtualizado.lembreteCalibragem = veiculoAtualizado.lembreteCalibragem === 1;
+            veiculoAtualizado.exibirNoDashboard = veiculoAtualizado.exibirNoDashboard === 1;
+          }
+          resolve({ 
+            success: true, 
+            message: 'Veículo atualizado com sucesso',
+            data: veiculoAtualizado
+          });
         } else {
           resolve({ success: false, message: 'Veículo não encontrado para atualização' });
         }

@@ -35,14 +35,28 @@ export const useVeiculos = () => {
       setError(null);
       const result = await veiculoService.criar(veiculoForm);
       if (result.success && result.data) {
-        addVehicle(result.data);
+        const veiculo: Veiculo = {
+          id: result.data.id,
+          nome: result.data.nome,
+          capacidadeTanque: result.data.capacidadeTanque,
+          consumoManualGasolina: result.data.consumoManualGasolina,
+          consumoManualEtanol: result.data.consumoManualEtanol,
+          tipoPonteiro: result.data.tipoPonteiro,
+          salvarLocalizacao: result.data.salvarLocalizacao === 1,
+          lembreteCalibragem: result.data.lembreteCalibragem === 1,
+          frequenciaLembrete: result.data.frequenciaLembrete,
+          dataUltimaCalibragem: result.data.dataUltimaCalibragem,
+          exibirNoDashboard: result.data.exibirNoDashboard === 1,
+        };
+        addVehicle(veiculo);
         return true;
       } else {
-        setError(result.message);
+        setError(result.message || 'Erro ao criar veículo');
         return false;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar veículo');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar veículo';
+      setError(errorMessage);
       return false;
     } finally {
       setLoading(false);
@@ -55,14 +69,28 @@ export const useVeiculos = () => {
       setError(null);
       const result = await veiculoService.atualizar(id, veiculoForm);
       if (result.success && result.data) {
-        updateVehicle(result.data);
+        const veiculo: Veiculo = {
+          id: result.data.id,
+          nome: result.data.nome,
+          capacidadeTanque: result.data.capacidadeTanque,
+          consumoManualGasolina: result.data.consumoManualGasolina,
+          consumoManualEtanol: result.data.consumoManualEtanol,
+          tipoPonteiro: result.data.tipoPonteiro,
+          salvarLocalizacao: result.data.salvarLocalizacao === 1,
+          lembreteCalibragem: result.data.lembreteCalibragem === 1,
+          frequenciaLembrete: result.data.frequenciaLembrete,
+          dataUltimaCalibragem: result.data.dataUltimaCalibragem,
+          exibirNoDashboard: result.data.exibirNoDashboard === 1,
+        };
+        updateVehicle(veiculo);
         return true;
       } else {
-        setError(result.message);
+        setError(result.message || 'Erro ao atualizar veículo');
         return false;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao atualizar veículo');
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar veículo';
+      setError(errorMessage);
       return false;
     } finally {
       setLoading(false);

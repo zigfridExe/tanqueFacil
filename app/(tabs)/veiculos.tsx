@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import React from 'react';
 import {
     ActivityIndicator,
@@ -25,13 +25,26 @@ export default function VeiculosScreen() {
     limparErro 
   } = useVeiculos();
 
+  useFocusEffect(
+    React.useCallback(() => {
+      carregarVeiculos();
+    }, [carregarVeiculos])
+  );
+
   const handleAdicionarVeiculo = () => {
-    router.push('/veiculo-cadastro');
+    router.push({
+      pathname: '/veiculo-cadastro',
+      params: { refresh: Date.now() } // Força um refresh ao retornar
+    });
   };
 
   const handleEditarVeiculo = (veiculo: Veiculo) => {
-    // TODO: Implementar navegação para edição
-    Alert.alert('Editar', `Editar veículo: ${veiculo.nome}`);
+    if (veiculo.id) {
+      router.push({
+        pathname: '/veiculo-cadastro',
+        params: { veiculoId: veiculo.id }
+      });
+    }
   };
 
   const handleExcluirVeiculo = async (veiculo: Veiculo) => {

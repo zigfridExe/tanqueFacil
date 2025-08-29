@@ -38,32 +38,46 @@ export default function VeiculoCadastro() {
 
   useFocusEffect(
     useCallback(() => {
+      let isActive = true;
+      
       const fetchVeiculo = async () => {
         if (isEditing && typeof veiculoId === 'string') {
           const id = parseInt(veiculoId, 10);
           if (!isNaN(id)) {
-            const veiculo = await buscarVeiculoPorId(id);
-            if (veiculo) {
-              setCurrentVeiculo(veiculo);
-                            setForm({
-                nome: veiculo.nome,
-                capacidadeTanque: veiculo.capacidadeTanque.toString(),
-                consumoManualGasolina: veiculo.consumoManualGasolina?.toString() ?? '',
-                consumoManualEtanol: veiculo.consumoManualEtanol?.toString() ?? '',
-                tipoPonteiro: veiculo.tipoPonteiro,
-                salvarLocalizacao: veiculo.salvarLocalizacao,
-                lembreteCalibragem: veiculo.lembreteCalibragem,
-                frequenciaLembrete: veiculo.frequenciaLembrete.toString(),
-                exibirNoDashboard: veiculo.exibirNoDashboard,
-              });
-            } else {
-              Alert.alert('Erro', 'Veículo não encontrado.');
-              router.back();
+            try {
+              const veiculo = await buscarVeiculoPorId(id);
+              if (isActive && veiculo) {
+                setCurrentVeiculo(veiculo);
+                setForm({
+                  nome: veiculo.nome,
+                  capacidadeTanque: veiculo.capacidadeTanque.toString(),
+                  consumoManualGasolina: veiculo.consumoManualGasolina?.toString() ?? '',
+                  consumoManualEtanol: veiculo.consumoManualEtanol?.toString() ?? '',
+                  tipoPonteiro: veiculo.tipoPonteiro,
+                  salvarLocalizacao: veiculo.salvarLocalizacao,
+                  lembreteCalibragem: veiculo.lembreteCalibragem,
+                  frequenciaLembrete: veiculo.frequenciaLembrete.toString(),
+                  exibirNoDashboard: veiculo.exibirNoDashboard,
+                });
+              } else if (isActive) {
+                Alert.alert('Erro', 'Veículo não encontrado.');
+                router.back();
+              }
+            } catch (err) {
+              if (isActive) {
+                Alert.alert('Erro', 'Não foi possível carregar os dados do veículo.');
+                router.back();
+              }
             }
           }
         }
       };
+      
       fetchVeiculo();
+      
+      return () => {
+        isActive = false;
+      };
     }, [isEditing, veiculoId, buscarVeiculoPorId])
   );
 
@@ -101,11 +115,11 @@ export default function VeiculoCadastro() {
     }
 
     if (sucesso) {
-      Alert.alert(
-        'Sucesso!',
-        isEditing ? 'Veículo atualizado com sucesso!' : 'Veículo cadastrado com sucesso!',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      // Força um refresh na tela anterior
+      router.replace({
+        pathname: '/(tabs)/veiculos',
+        params: { refresh: Date.now() }
+      });
     } else {
       Alert.alert('Erro', error || (isEditing ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo'));
     }

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1756480033083" clover="3.2.0">
-  <project timestamp="1756480033083" name="All files">
-    <metrics statements="234" coveredstatements="130" conditionals="98" coveredconditionals="50" methods="50" coveredmethods="37" elements="382" coveredelements="217" complexity="0" loc="234" ncloc="234" packages="4" files="7" classes="7"/>
+<coverage generated="1756482826455" clover="3.2.0">
+  <project timestamp="1756482826455" name="All files">
+    <metrics statements="234" coveredstatements="130" conditionals="110" coveredconditionals="58" methods="50" coveredmethods="37" elements="394" coveredelements="225" complexity="0" loc="234" ncloc="234" packages="4" files="7" classes="7"/>
     <package name="hooks">
       <metrics statements="73" coveredstatements="37" conditionals="8" coveredconditionals="2" methods="9" coveredmethods="6"/>
-      <file name="useAbastecimentos.ts" path="C:\Manutenção\_Projetcts\tanqueFacil\hooks\useAbastecimentos.ts">
+      <file name="useAbastecimentos.ts" path="C:\mikrotik\_Projects\tanqueFacil\hooks\useAbastecimentos.ts">
         <metrics statements="73" coveredstatements="37" conditionals="8" coveredconditionals="2" methods="9" coveredmethods="6"/>
         <line num="5" count="1" type="stmt"/>
         <line num="6" count="5" type="stmt"/>
@@ -82,8 +82,8 @@
       </file>
     </package>
     <package name="services">
-      <metrics statements="125" coveredstatements="70" conditionals="62" coveredconditionals="32" methods="21" coveredmethods="15"/>
-      <file name="abastecimentoService.ts" path="C:\Manutenção\_Projetcts\tanqueFacil\services\abastecimentoService.ts">
+      <metrics statements="125" coveredstatements="70" conditionals="74" coveredconditionals="40" methods="21" coveredmethods="15"/>
+      <file name="abastecimentoService.ts" path="C:\mikrotik\_Projects\tanqueFacil\services\abastecimentoService.ts">
         <metrics statements="72" coveredstatements="42" conditionals="36" coveredconditionals="17" methods="8" coveredmethods="6"/>
         <line num="19" count="5" type="stmt"/>
         <line num="22" count="1" type="stmt"/>
@@ -158,8 +158,8 @@
         <line num="196" count="0" type="stmt"/>
         <line num="197" count="0" type="stmt"/>
       </file>
-      <file name="veiculoService.ts" path="C:\Manutenção\_Projetcts\tanqueFacil\services\veiculoService.ts">
-        <metrics statements="53" coveredstatements="28" conditionals="26" coveredconditionals="15" methods="13" coveredmethods="9"/>
+      <file name="veiculoService.ts" path="C:\mikrotik\_Projects\tanqueFacil\services\veiculoService.ts">
+        <metrics statements="53" coveredstatements="28" conditionals="38" coveredconditionals="23" methods="13" coveredmethods="9"/>
         <line num="4" count="1" type="stmt"/>
         <line num="7" count="2" type="stmt"/>
         <line num="8" count="2" type="stmt"/>
@@ -217,10 +217,10 @@
     </package>
     <package name="src.store">
       <metrics statements="8" coveredstatements="8" conditionals="2" coveredconditionals="1" methods="11" coveredmethods="11"/>
-      <file name="index.ts" path="C:\Manutenção\_Projetcts\tanqueFacil\src\store\index.ts">
+      <file name="index.ts" path="C:\mikrotik\_Projects\tanqueFacil\src\store\index.ts">
         <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       </file>
-      <file name="useVehicleStore.ts" path="C:\Manutenção\_Projetcts\tanqueFacil\src\store\useVehicleStore.ts">
+      <file name="useVehicleStore.ts" path="C:\mikrotik\_Projects\tanqueFacil\src\store\useVehicleStore.ts">
         <metrics statements="8" coveredstatements="8" conditionals="2" coveredconditionals="1" methods="11" coveredmethods="11"/>
         <line num="14" count="1" type="stmt"/>
         <line num="17" count="7" type="stmt"/>
@@ -234,14 +234,14 @@
     </package>
     <package name="src.utils">
       <metrics statements="28" coveredstatements="15" conditionals="26" coveredconditionals="15" methods="9" coveredmethods="5"/>
-      <file name="consumo.ts" path="C:\Manutenção\_Projetcts\tanqueFacil\src\utils\consumo.ts">
+      <file name="consumo.ts" path="C:\mikrotik\_Projects\tanqueFacil\src\utils\consumo.ts">
         <metrics statements="4" coveredstatements="4" conditionals="10" coveredconditionals="10" methods="2" coveredmethods="2"/>
         <line num="2" count="3" type="cond" truecount="5" falsecount="0"/>
         <line num="3" count="2" type="stmt"/>
         <line num="7" count="3" type="cond" truecount="5" falsecount="0"/>
         <line num="8" count="2" type="stmt"/>
       </file>
-      <file name="format.ts" path="C:\Manutenção\_Projetcts\tanqueFacil\src\utils\format.ts">
+      <file name="format.ts" path="C:\mikrotik\_Projects\tanqueFacil\src\utils\format.ts">
         <metrics statements="24" coveredstatements="11" conditionals="16" coveredconditionals="5" methods="7" coveredmethods="3"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>

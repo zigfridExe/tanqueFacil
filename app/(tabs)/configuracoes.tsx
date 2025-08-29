@@ -37,9 +37,9 @@ export default function ConfiguracoesScreen() {
 
     const veiculoForm: VeiculoForm = {
       ...veiculoAtual,
-      capacidadeTanque: veiculoAtual.capacidadeTanque.toString(),
-      consumoManualGasolina: veiculoAtual.consumoManualGasolina.toString(),
-      consumoManualEtanol: veiculoAtual.consumoManualEtanol.toString(),
+      capacidadeTanque: veiculoAtual.capacidadeTanque?.toString() || '0',
+      consumoManualGasolina: veiculoAtual.consumoManualGasolina?.toString() || '',
+      consumoManualEtanol: veiculoAtual.consumoManualEtanol?.toString() || '',
       // tipoPonteiro is now handled only in veiculo-cadastro
       salvarLocalizacao: salvarLocalizacao,
       lembreteCalibragem: lembreteCalibragem,
@@ -55,14 +55,6 @@ export default function ConfiguracoesScreen() {
     }
   }, [veiculoAtual, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, carregarVeiculos, veiculosSelecionados]);
 
-  useEffect(() => {
-    if (!veiculoAtual) return;
-    const timer = setTimeout(() => {
-      handleSave();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, handleSave, veiculoAtual]);
 
   const handleToggleVeiculoDashboard = (id: number) => {
     setVeiculosSelecionados(prev =>
@@ -213,40 +205,24 @@ export default function ConfiguracoesScreen() {
                 </View>
               )}
             </View>
+
+            <View style={styles.section}>
+              <TouchableOpacity 
+                style={styles.saveButton} 
+                onPress={handleSave}
+              >
+                <ThemedText style={styles.saveButtonText}>SALVAR ALTERAÇÕES</ThemedText>
+              </TouchableOpacity>
+            </View>
           </>
         ) : (
-          <View style={styles.section}>
-            <ThemedText style={styles.aboutLabel}>Nenhum veículo cadastrado.</ThemedText>
-            <ThemedText style={styles.aboutLabel}>Cadastre um veículo para ver as configurações.</ThemedText>
+          <View style={styles.emptyState}>
+            <ThemedText>Nenhum veículo cadastrado.</ThemedText>
+            <TouchableOpacity style={styles.addButton} onPress={() => router.push('/veiculo-cadastro')}>
+              <ThemedText style={styles.addButtonText}>Adicionar Veículo</ThemedText>
+            </TouchableOpacity>
           </View>
         )}
-
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Opções de Dados</ThemedText>
-          <TouchableOpacity style={styles.optionButton} onPress={() => Alert.alert('Funcionalidade em desenvolvimento', 'A exportação de histórico será implementada em breve.')}>
-            <ThemedText style={styles.optionButtonText}>EXPORTAR MEU HISTÓRICO</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.optionButton, { marginTop: 10 }]} onPress={handleResetData}>
-            <ThemedText style={styles.optionButtonText}>LIMPAR TODOS OS DADOS</ThemedText>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Sobre</ThemedText>
-          <View style={styles.aboutItem}>
-            <ThemedText style={styles.aboutLabel}>Versão do Aplicativo:</ThemedText>
-            <ThemedText style={styles.aboutValue}>1.0.0</ThemedText>
-          </View>
-          <View style={styles.aboutItem}>
-            <ThemedText style={styles.aboutLabel}>Licença:</ThemedText>
-            <ThemedText style={styles.aboutValue}>MIT License</ThemedText>
-          </View>
-          <View style={styles.aboutItem}>
-            <ThemedText style={styles.aboutLabel}>Desenvolvido por:</ThemedText>
-            <ThemedText style={styles.aboutValue}>MSR - Software developer</ThemedText>
-          </View>
-        </View>
-
       </ScrollView>
     </ThemedView>
   );
@@ -357,5 +333,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: Colors.light.background,
     color: Colors.light.text,
+  },
+  saveButton: {
+    backgroundColor: Colors.light.tint,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  saveButtonText: {
+    color: Colors.light.background,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  addButton: {
+    backgroundColor: Colors.light.tint,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+    width: '100%',
+  },
+  addButtonText: {
+    color: Colors.light.background,
+    fontWeight: 'bold',
   },
 });
