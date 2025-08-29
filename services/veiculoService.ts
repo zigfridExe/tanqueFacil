@@ -8,13 +8,13 @@ export const veiculoService = {
       const veiculo = {
         nome: veiculoForm.nome,
         capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
-        consumoManualGasolina: (veiculoForm.consumoManualGasolina && parseFloat(veiculoForm.consumoManualGasolina)) || null,
-        consumoManualEtanol: (veiculoForm.consumoManualEtanol && parseFloat(veiculoForm.consumoManualEtanol)) || null,
-        tipoPonteiro: veiculoForm.tipoPonteiro,
-        salvarLocalizacao: veiculoForm.salvarLocalizacao ? 1 : 0,
-        lembreteCalibragem: veiculoForm.lembreteCalibragem ? 1 : 0,
-        frequenciaLembrete: parseInt(veiculoForm.frequenciaLembrete),
-        exibirNoDashboard: veiculoForm.exibirNoDashboard ? 1 : 0,
+        consumoManualGasolina: null, // Default value
+        consumoManualEtanol: null, // Default value
+        tipoPonteiro: 'Analógico', // Default value
+        salvarLocalizacao: 0, // Default value (false)
+        lembreteCalibragem: 0, // Default value (false)
+        frequenciaLembrete: 30, // Default value
+        exibirNoDashboard: 1, // Default value (true)
         // dataUltimaCalibragem will be handled separately or initialized by DB
       };
 
@@ -113,21 +113,8 @@ export const veiculoService = {
   },
 
   // Atualizar veículo
-  async atualizar(id: number, veiculoForm: VeiculoForm): Promise<DatabaseResult> {
+  async atualizar(id: number, veiculo: Veiculo): Promise<DatabaseResult> {
     return new Promise(async (resolve) => {
-      const veiculo = {
-        nome: veiculoForm.nome,
-        capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
-        consumoManualGasolina: (veiculoForm.consumoManualGasolina && parseFloat(veiculoForm.consumoManualGasolina)) || null,
-        consumoManualEtanol: (veiculoForm.consumoManualEtanol && parseFloat(veiculoForm.consumoManualEtanol)) || null,
-        tipoPonteiro: veiculoForm.tipoPonteiro,
-        salvarLocalizacao: veiculoForm.salvarLocalizacao ? 1 : 0,
-        lembreteCalibragem: veiculoForm.lembreteCalibragem ? 1 : 0,
-        frequenciaLembrete: parseInt(veiculoForm.frequenciaLembrete),
-        dataUltimaCalibragem: veiculoForm.dataUltimaCalibragem || null,
-        exibirNoDashboard: veiculoForm.exibirNoDashboard ? 1 : 0,
-      };
-
       try {
         const db = await getDb();
         const result = await db.runAsync(
@@ -142,11 +129,11 @@ export const veiculoService = {
           veiculo.consumoManualGasolina,
           veiculo.consumoManualEtanol,
           veiculo.tipoPonteiro,
-          veiculo.salvarLocalizacao,
-          veiculo.lembreteCalibragem,
+          veiculo.salvarLocalizacao ? 1 : 0,
+          veiculo.lembreteCalibragem ? 1 : 0,
           veiculo.frequenciaLembrete,
-          veiculo.dataUltimaCalibragem,
-          veiculo.exibirNoDashboard,
+          veiculo.dataUltimaCalibragem || null,
+          veiculo.exibirNoDashboard ? 1 : 0,
           id
         );
         if (result.changes > 0) {

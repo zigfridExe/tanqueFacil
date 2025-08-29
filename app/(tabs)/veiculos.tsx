@@ -47,6 +47,15 @@ export default function VeiculosScreen() {
     }
   };
 
+  const handleConfigurarVeiculo = (veiculo: Veiculo) => {
+    if (veiculo.id) {
+      router.push({
+        pathname: '/veiculo-configuracoes',
+        params: { veiculoId: veiculo.id }
+      });
+    }
+  };
+
   const handleExcluirVeiculo = async (veiculo: Veiculo) => {
     Alert.alert(
       'Confirmar Exclusão',
@@ -80,6 +89,13 @@ export default function VeiculosScreen() {
       </View>
       
       <View style={styles.veiculoAcoes}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.configButton]}
+          onPress={() => handleConfigurarVeiculo(item)}
+        >
+          <ThemedText style={styles.actionButtonText}>Configurar</ThemedText>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.actionButton, styles.editarButton]}
           onPress={() => handleEditarVeiculo(item)}
@@ -215,6 +231,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  configButton: {
+    backgroundColor: '#2196F3',
   },
   editarButton: {
     backgroundColor: Colors.light.tint,

@@ -3,82 +3,35 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import * as database from '@/database/database';
 import { useVeiculos } from '@/hooks/useVeiculos';
-import { veiculoService } from '@/services/veiculoService';
-import { VeiculoForm } from '@/types/veiculo';
-import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 
 export default function ConfiguracoesScreen() {
-  const { veiculos, carregarVeiculos } = useVeiculos();
-  const veiculoAtual = veiculos.length > 0 ? veiculos[0] : null;
-
-  const [consumoType, setConsumoType] = useState<'aprendido' | 'manual'>('aprendido');
+  const { carregarVeiculos } = useVeiculos();
   const [salvarLocalizacao, setSalvarLocalizacao] = useState<boolean>(false);
-  const [lembreteCalibragem, setLembreteCalibragem] = useState<boolean>(false);
-  const [frequenciaLembrete, setFrequenciaLembrete] = useState<string>('30');
-  const [veiculosSelecionados, setVeiculosSelecionados] = useState<number[]>([]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (veiculoAtual) {
-        setConsumoType(veiculoAtual.consumoManualGasolina ? 'manual' : 'aprendido');
-        setSalvarLocalizacao(veiculoAtual.salvarLocalizacao);
-        setLembreteCalibragem(veiculoAtual.lembreteCalibragem);
-        setFrequenciaLembrete(veiculoAtual.frequenciaLembrete?.toString() || '30');
-      }
-      const veiculosExibidos = veiculos.filter(v => v.exibirNoDashboard).map(v => v.id as number);
-      setVeiculosSelecionados(veiculosExibidos);
-    }, [veiculoAtual, veiculos])
-  );
-
-  const handleSave = useCallback(async () => {
-    if (!veiculoAtual) return;
-
-    const veiculoForm: VeiculoForm = {
-      ...veiculoAtual,
-      capacidadeTanque: veiculoAtual.capacidadeTanque?.toString() || '0',
-      consumoManualGasolina: veiculoAtual.consumoManualGasolina?.toString() || '',
-      consumoManualEtanol: veiculoAtual.consumoManualEtanol?.toString() || '',
-      // tipoPonteiro is now handled only in veiculo-cadastro
-      salvarLocalizacao: salvarLocalizacao,
-      lembreteCalibragem: lembreteCalibragem,
-      frequenciaLembrete: frequenciaLembrete,
-      exibirNoDashboard: veiculosSelecionados.includes(veiculoAtual.id as number),
-    };
-
-    const result = await veiculoService.atualizar(veiculoAtual.id as number, veiculoForm);
-    if (result.success) {
-      carregarVeiculos();
-    } else {
-      Alert.alert('Erro', 'Não foi possível salvar as configurações.');
-    }
-  }, [veiculoAtual, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete, carregarVeiculos, veiculosSelecionados]);
-
-
-  const handleToggleVeiculoDashboard = (id: number) => {
-    setVeiculosSelecionados(prev =>
-      prev.includes(id) ? prev.filter(veiculoId => veiculoId !== id) : [...prev, id]
-    );
-  };
+  const [notificacoesAtivas, setNotificacoesAtivas] = useState<boolean>(true);
+  const [temaEscuro, setTemaEscuro] = useState<boolean>(false);
+  const [backupAutomatico, setBackupAutomatico] = useState<boolean>(true);
 
   const handleResetData = () => {
     Alert.alert(
-      'Redefinir Dados',
-      'Tem certeza que deseja redefinir todos os dados do aplicativo? Esta ação é irreversível.',
+      'Limpar Todos os Dados',
+      'Tem certeza que deseja apagar todos os dados do aplicativo? Esta ação não pode ser desfeita.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Redefinir',
+          text: 'Limpar Tudo',
           style: 'destructive',
           onPress: async () => {
             try {
               await database.resetDatabase();
-              Alert.alert('Sucesso', 'Todos os dados foram redefinidos.');
+              Alert.alert('Sucesso', 'Todos os dados foram apagados.');
               carregarVeiculos();
+              router.replace('/(tabs)');
             } catch (error) {
-              console.error('Erro ao redefinir dados:', error);
-              Alert.alert('Erro', 'Não foi possível redefinir os dados.');
+              console.error('Erro ao limpar dados:', error);
+              Alert.alert('Erro', 'Não foi possível limpar os dados.');
             }
           },
         },
@@ -86,143 +39,101 @@ export default function ConfiguracoesScreen() {
     );
   };
 
-  const handleEditVehicle = () => {
-    if (veiculoAtual) {
-      router.push({ pathname: '/veiculo-cadastro', params: { veiculoId: veiculoAtual.id } });
-    }
-  };
-
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <ThemedText style={styles.title}>Ajustes e Personalização</ThemedText>
+          <ThemedText style={styles.title}>Configurações do Aplicativo</ThemedText>
         </View>
 
-        {veiculoAtual ? (
-          <>
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Exibição no Dashboard</ThemedText>
-              {veiculos.map(veiculo => (
-                <View key={veiculo.id} style={styles.switchGroup}>
-                  <ThemedText style={styles.label}>{veiculo.nome}</ThemedText>
-                  <Switch
-                    value={veiculosSelecionados.includes(veiculo.id as number)}
-                    onValueChange={() => handleToggleVeiculoDashboard(veiculo.id as number)}
-                    trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-                    thumbColor={veiculosSelecionados.includes(veiculo.id as number) ? Colors.light.background : Colors.light.text}
-                  />
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Dados do Veículo</ThemedText>
-              <View>
-                <View style={styles.aboutItem}>
-                  <ThemedText style={styles.aboutLabel}>Veículo Atual:</ThemedText>
-                  <ThemedText style={styles.aboutValue}>{veiculoAtual.nome}</ThemedText>
-                </View>
-                <View style={styles.aboutItem}>
-                  <ThemedText style={styles.aboutLabel}>Capacidade do Tanque:</ThemedText>
-                  <ThemedText style={styles.aboutValue}>{veiculoAtual.capacidadeTanque} Litros</ThemedText>
-                </View>
-                <TouchableOpacity style={styles.optionButton} onPress={handleEditVehicle}>
-                  <ThemedText style={styles.optionButtonText}>EDITAR DADOS DO CARRO</ThemedText>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Consumo de Combustível</ThemedText>
-              <ThemedText style={styles.label}>Qual a sua forma de acompanhamento preferida?</ThemedText>
-              <View style={styles.radioGroup}>
-                <TouchableOpacity
-                  style={[
-                    styles.radioButton,
-                    consumoType === 'aprendido' && styles.radioButtonSelected
-                  ]}
-                  onPress={() => setConsumoType('aprendido')}
-                >
-                  <ThemedText style={[
-                    styles.radioText,
-                    consumoType === 'aprendido' && styles.radioTextSelected
-                  ]}>
-                    Consumo Aprendido
-                  </ThemedText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.radioButton,
-                    consumoType === 'manual' && styles.radioButtonSelected
-                  ]}
-                  onPress={() => setConsumoType('manual')}
-                >
-                  <ThemedText style={[
-                    styles.radioText,
-                    consumoType === 'manual' && styles.radioTextSelected
-                  ]}>
-                    Consumo Manual
-                    {consumoType === 'manual' && ` (${veiculoAtual.consumoManualGasolina} km/L)`}
-                  </ThemedText>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <ThemedText style={styles.sectionTitle}>Funcionalidades Adicionais</ThemedText>
-              <View style={styles.switchGroup}>
-                <ThemedText style={styles.label}>Salvar Local do Abastecimento (GPS)</ThemedText>
-                <Switch
-                  value={salvarLocalizacao}
-                  onValueChange={setSalvarLocalizacao}
-                  trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-                  thumbColor={salvarLocalizacao ? Colors.light.background : Colors.light.text}
-                />
-              </View>
-
-              <View style={styles.switchGroup}>
-                <ThemedText style={styles.label}>Lembrete de Calibragem de Pneus</ThemedText>
-                <Switch
-                  value={lembreteCalibragem}
-                  onValueChange={setLembreteCalibragem}
-                  trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-                  thumbColor={lembreteCalibragem ? Colors.light.background : Colors.light.text}
-                />
-              </View>
-
-              {lembreteCalibragem && (
-                <View style={styles.inputGroup}>
-                  <ThemedText style={styles.label}>Lembrete a cada (dias)</ThemedText>
-                  <TextInput
-                    style={styles.input}
-                    value={frequenciaLembrete}
-                    onChangeText={setFrequenciaLembrete}
-                    placeholder="30"
-                    keyboardType="numeric"
-                    placeholderTextColor={Colors.light.text}
-                  />
-                </View>
-              )}
-            </View>
-
-            <View style={styles.section}>
-              <TouchableOpacity 
-                style={styles.saveButton} 
-                onPress={handleSave}
-              >
-                <ThemedText style={styles.saveButtonText}>SALVAR ALTERAÇÕES</ThemedText>
-              </TouchableOpacity>
-            </View>
-          </>
-        ) : (
-          <View style={styles.emptyState}>
-            <ThemedText>Nenhum veículo cadastrado.</ThemedText>
-            <TouchableOpacity style={styles.addButton} onPress={() => router.push('/veiculo-cadastro')}>
-              <ThemedText style={styles.addButtonText}>Adicionar Veículo</ThemedText>
-            </TouchableOpacity>
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Preferências de Exibição</ThemedText>
+          <View style={styles.switchGroup}>
+            <ThemedText style={styles.label}>Tema Escuro</ThemedText>
+            <Switch
+              value={temaEscuro}
+              onValueChange={setTemaEscuro}
+              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+              thumbColor={temaEscuro ? Colors.light.background : Colors.light.text}
+            />
           </View>
-        )}
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Funcionalidades</ThemedText>
+          <View style={styles.switchGroup}>
+            <ThemedText style={styles.label}>Salvar Localização</ThemedText>
+            <Switch
+              value={salvarLocalizacao}
+              onValueChange={setSalvarLocalizacao}
+              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+              thumbColor={salvarLocalizacao ? Colors.light.background : Colors.light.text}
+            />
+          </View>
+          <View style={styles.switchGroup}>
+            <ThemedText style={styles.label}>Notificações</ThemedText>
+            <Switch
+              value={notificacoesAtivas}
+              onValueChange={setNotificacoesAtivas}
+              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+              thumbColor={notificacoesAtivas ? Colors.light.background : Colors.light.text}
+            />
+          </View>
+          <View style={styles.switchGroup}>
+            <ThemedText style={styles.label}>Backup Automático</ThemedText>
+            <Switch
+              value={backupAutomatico}
+              onValueChange={setBackupAutomatico}
+              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+              thumbColor={backupAutomatico ? Colors.light.background : Colors.light.text}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Gerenciamento de Dados</ThemedText>
+          <TouchableOpacity 
+            style={[styles.button, styles.exportButton]} 
+            onPress={() => Alert.alert('Em desenvolvimento', 'Exportação de dados em desenvolvimento')}
+          >
+            <ThemedText style={styles.buttonText}>Exportar Dados</ThemedText>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.button, styles.backupButton]} 
+            onPress={() => Alert.alert('Em desenvolvimento', 'Backup em desenvolvimento')}
+          >
+            <ThemedText style={styles.buttonText}>Fazer Backup</ThemedText>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.button, styles.restoreButton]} 
+            onPress={() => Alert.alert('Em desenvolvimento', 'Restauração em desenvolvimento')}
+          >
+            <ThemedText style={styles.buttonText}>Restaurar Backup</ThemedText>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.button, styles.dangerButton]} 
+            onPress={handleResetData}
+          >
+            <ThemedText style={styles.buttonText}>Limpar Todos os Dados</ThemedText>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Sobre o Aplicativo</ThemedText>
+          <View style={styles.aboutItem}>
+            <ThemedText style={styles.aboutLabel}>Versão</ThemedText>
+            <ThemedText style={styles.aboutValue}>1.0.0</ThemedText>
+          </View>
+          <TouchableOpacity 
+            style={styles.supportButton}
+            onPress={() => Alert.alert('Suporte', 'Entre em contato: suporte@tanquefacil.com')}
+          >
+            <ThemedText style={styles.supportButtonText}>Contato do Suporte</ThemedText>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </ThemedView>
   );
@@ -262,16 +173,40 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: Colors.light.text,
   },
-  optionButton: {
-    backgroundColor: Colors.light.tint,
+  switchGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.light.text,
+  },
+  button: {
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 10,
   },
-  optionButtonText: {
+  buttonText: {
     color: Colors.light.background,
+    fontWeight: 'bold',
     fontSize: 16,
-    fontWeight: '600',
+  },
+  exportButton: {
+    backgroundColor: Colors.light.tint,
+  },
+  backupButton: {
+    backgroundColor: '#4CAF50',
+  },
+  restoreButton: {
+    backgroundColor: '#2196F3',
+  },
+  dangerButton: {
+    backgroundColor: '#F44336',
+    marginTop: 10,
   },
   aboutItem: {
     flexDirection: 'row',
@@ -287,82 +222,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.light.text,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: Colors.light.text,
-  },
-  radioGroup: {
-    flexDirection: 'row',
-    gap: 15,
-  },
-  radioButton: {
-    flex: 1,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.tint,
-    borderRadius: 8,
+  supportButton: {
+    padding: 10,
     alignItems: 'center',
   },
-  radioButtonSelected: {
-    backgroundColor: Colors.light.tint,
-  },
-  radioText: {
-    fontSize: 16,
-    color: Colors.light.text,
-  },
-  radioTextSelected: {
-    color: Colors.light.background,
-    fontWeight: '600',
-  },
-  switchGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: Colors.light.tint,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: Colors.light.background,
-    color: Colors.light.text,
-  },
-  saveButton: {
-    backgroundColor: Colors.light.tint,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  saveButtonText: {
-    color: Colors.light.background,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  addButton: {
-    backgroundColor: Colors.light.tint,
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-    width: '100%',
-  },
-  addButtonText: {
-    color: Colors.light.background,
-    fontWeight: 'bold',
+  supportButtonText: {
+    color: Colors.light.tint,
+    textDecorationLine: 'underline',
   },
 });

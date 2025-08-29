@@ -24,14 +24,6 @@ export default function VeiculoCadastro() {
   const [form, setForm] = useState<VeiculoForm>({
     nome: '',
     capacidadeTanque: '',
-    consumoManualGasolina: '',
-    consumoManualEtanol: '',
-    tipoPonteiro: 'Analógico',
-    salvarLocalizacao: false,
-    lembreteCalibragem: false,
-    frequenciaLembrete: '30',
-    exibirNoDashboard: true,
-    dataUltimaCalibragem: new Date().toISOString().split('T')[0], // Initialize with current date
   });
 
   const [currentVeiculo, setCurrentVeiculo] = useState<Veiculo | null>(null);
@@ -51,13 +43,6 @@ export default function VeiculoCadastro() {
                 setForm({
                   nome: veiculo.nome,
                   capacidadeTanque: veiculo.capacidadeTanque.toString(),
-                  consumoManualGasolina: veiculo.consumoManualGasolina?.toString() ?? '',
-                  consumoManualEtanol: veiculo.consumoManualEtanol?.toString() ?? '',
-                  tipoPonteiro: veiculo.tipoPonteiro,
-                  salvarLocalizacao: veiculo.salvarLocalizacao,
-                  lembreteCalibragem: veiculo.lembreteCalibragem,
-                  frequenciaLembrete: veiculo.frequenciaLembrete.toString(),
-                  exibirNoDashboard: veiculo.exibirNoDashboard,
                 });
               } else if (isActive) {
                 Alert.alert('Erro', 'Veículo não encontrado.');
@@ -101,10 +86,8 @@ export default function VeiculoCadastro() {
     if (!validarFormulario()) return;
 
     const dadosParaSalvar: VeiculoForm = {
-      ...form,
+      nome: form.nome,
       capacidadeTanque: form.capacidadeTanque.replace(',', '.'),
-      consumoManualGasolina: form.consumoManualGasolina?.replace(',', '.') || '',
-      consumoManualEtanol: form.consumoManualEtanol?.replace(',', '.') || '',
     };
 
     let sucesso = false;
@@ -156,105 +139,15 @@ export default function VeiculoCadastro() {
           />
         </View>
 
-        {/* Consumo Gasolina */}
-        {/* Consumo Gasolina */}
-        <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Consumo Gasolina (km/L)</ThemedText>
-          <TextInput
-            style={styles.input}
-            value={form.consumoManualGasolina}
-            onChangeText={(value) => handleInputChange('consumoManualGasolina', value)}
-            placeholder="Ex: 12.5 (opcional)"
-            keyboardType="numeric"
-            placeholderTextColor={Colors.light.text}
-          />
-        </View>
+        
 
-        {/* Consumo Etanol */}
-        {/* Consumo Etanol */}
-        <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Consumo Etanol (km/L)</ThemedText>
-          <TextInput
-            style={styles.input}
-            value={form.consumoManualEtanol}
-            onChangeText={(value) => handleInputChange('consumoManualEtanol', value)}
-            placeholder="Ex: 8.5 (opcional)"
-            keyboardType="numeric"
-            placeholderTextColor={Colors.light.text}
-          />
-        </View>
+        
 
-        {/* Tipo de Ponteiro */}
-        <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Tipo de Ponteiro</ThemedText>
-          <View style={styles.radioGroup}>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                form.tipoPonteiro === 'Analógico' && styles.radioButtonSelected
-              ]}
-              onPress={() => handleInputChange('tipoPonteiro', 'Analógico')}
-            >
-              <ThemedText style={[
-                styles.radioText,
-                form.tipoPonteiro === 'Analógico' && styles.radioTextSelected
-              ]}>
-                Analógico
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                form.tipoPonteiro === 'Digital' && styles.radioButtonSelected
-              ]}
-              onPress={() => handleInputChange('tipoPonteiro', 'Digital')}
-            >
-              <ThemedText style={[
-                styles.radioText,
-                form.tipoPonteiro === 'Digital' && styles.radioTextSelected
-              ]}>
-                Digital
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-        </View>
+        
 
-        {/* Salvar Localização */}
-        <View style={styles.switchGroup}>
-          <ThemedText style={styles.label}>Salvar Localização dos Abastecimentos</ThemedText>
-          <Switch
-            value={form.salvarLocalizacao}
-            onValueChange={(value) => handleInputChange('salvarLocalizacao', value)}
-            trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-            thumbColor={form.salvarLocalizacao ? Colors.light.background : Colors.light.text}
-          />
-        </View>
+        
 
-        {/* Lembrete de Calibragem */}
-        <View style={styles.switchGroup}>
-          <ThemedText style={styles.label}>Lembrete de Calibragem de Pneus</ThemedText>
-          <Switch
-            value={form.lembreteCalibragem}
-            onValueChange={(value) => handleInputChange('lembreteCalibragem', value)}
-            trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-            thumbColor={form.lembreteCalibragem ? Colors.light.background : Colors.light.text}
-          />
-        </View>
-
-        {/* Frequência do Lembrete */}
-        {form.lembreteCalibragem && (
-          <View style={styles.inputGroup}>
-            <ThemedText style={styles.label}>Frequência do Lembrete (dias)</ThemedText>
-            <TextInput
-              style={styles.input}
-              value={form.frequenciaLembrete}
-              onChangeText={(value) => handleInputChange('frequenciaLembrete', value)}
-              placeholder="Ex: 30"
-              keyboardType="numeric"
-              placeholderTextColor={Colors.light.text}
-            />
-          </View>
-        )}
+        
 
         {/* Botões */}
         <View style={styles.buttonContainer}>

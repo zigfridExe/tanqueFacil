@@ -15,14 +15,6 @@ export interface Veiculo {
 export interface VeiculoForm {
   nome: string;
   capacidadeTanque: string;
-  consumoManualGasolina?: string;
-  consumoManualEtanol?: string;
-  tipoPonteiro: 'Analógico' | 'Digital';
-  salvarLocalizacao: boolean;
-  lembreteCalibragem: boolean;
-  frequenciaLembrete: string;
-  dataUltimaCalibragem?: string; // Adicionado para armazenar a data da última calibragem
-  exibirNoDashboard: boolean;
 }
 
 export interface Abastecimento {
