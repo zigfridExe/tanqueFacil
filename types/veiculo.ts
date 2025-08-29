@@ -2,8 +2,8 @@ export interface Veiculo {
   id?: number;
   nome: string;
   capacidadeTanque: number;
-  consumoManualGasolina: number;
-  consumoManualEtanol: number;
+  consumoManualGasolina: number | null;
+  consumoManualEtanol: number | null;
   tipoPonteiro: 'Analógico' | 'Digital';
   salvarLocalizacao: boolean;
   lembreteCalibragem: boolean;
@@ -15,8 +15,8 @@ export interface Veiculo {
 export interface VeiculoForm {
   nome: string;
   capacidadeTanque: string;
-  consumoManualGasolina: string;
-  consumoManualEtanol: string;
+  consumoManualGasolina?: string;
+  consumoManualEtanol?: string;
   tipoPonteiro: 'Analógico' | 'Digital';
   salvarLocalizacao: boolean;
   lembreteCalibragem: boolean;

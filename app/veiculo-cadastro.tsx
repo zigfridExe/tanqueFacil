@@ -30,6 +30,7 @@ export default function VeiculoCadastro() {
     salvarLocalizacao: false,
     lembreteCalibragem: false,
     frequenciaLembrete: '30',
+    exibirNoDashboard: true,
     dataUltimaCalibragem: new Date().toISOString().split('T')[0], // Initialize with current date
   });
 
@@ -44,15 +45,16 @@ export default function VeiculoCadastro() {
             const veiculo = await buscarVeiculoPorId(id);
             if (veiculo) {
               setCurrentVeiculo(veiculo);
-              setForm({
+                            setForm({
                 nome: veiculo.nome,
                 capacidadeTanque: veiculo.capacidadeTanque.toString(),
-                consumoManualGasolina: veiculo.consumoManualGasolina.toString(),
-                consumoManualEtanol: veiculo.consumoManualEtanol.toString(),
+                consumoManualGasolina: veiculo.consumoManualGasolina?.toString() ?? '',
+                consumoManualEtanol: veiculo.consumoManualEtanol?.toString() ?? '',
                 tipoPonteiro: veiculo.tipoPonteiro,
                 salvarLocalizacao: veiculo.salvarLocalizacao,
                 lembreteCalibragem: veiculo.lembreteCalibragem,
                 frequenciaLembrete: veiculo.frequenciaLembrete.toString(),
+                exibirNoDashboard: veiculo.exibirNoDashboard,
               });
             } else {
               Alert.alert('Erro', 'Veículo não encontrado.');
@@ -78,14 +80,6 @@ export default function VeiculoCadastro() {
       Alert.alert('Erro', 'Por favor, informe a capacidade do tanque');
       return false;
     }
-    if (!form.consumoManualGasolina || parseFloat(form.consumoManualGasolina.replace(',', '.')) <= 0) {
-      Alert.alert('Erro', 'Por favor, informe o consumo de gasolina');
-      return false;
-    }
-    if (!form.consumoManualEtanol || parseFloat(form.consumoManualEtanol.replace(',', '.')) <= 0) {
-      Alert.alert('Erro', 'Por favor, informe o consumo de etanol');
-      return false;
-    }
     return true;
   };
 
@@ -95,8 +89,8 @@ export default function VeiculoCadastro() {
     const dadosParaSalvar: VeiculoForm = {
       ...form,
       capacidadeTanque: form.capacidadeTanque.replace(',', '.'),
-      consumoManualGasolina: form.consumoManualGasolina.replace(',', '.'),
-      consumoManualEtanol: form.consumoManualEtanol.replace(',', '.'),
+      consumoManualGasolina: form.consumoManualGasolina?.replace(',', '.') || '',
+      consumoManualEtanol: form.consumoManualEtanol?.replace(',', '.') || '',
     };
 
     let sucesso = false;
@@ -149,26 +143,28 @@ export default function VeiculoCadastro() {
         </View>
 
         {/* Consumo Gasolina */}
+        {/* Consumo Gasolina */}
         <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Consumo Gasolina (km/L) *</ThemedText>
+          <ThemedText style={styles.label}>Consumo Gasolina (km/L)</ThemedText>
           <TextInput
             style={styles.input}
             value={form.consumoManualGasolina}
             onChangeText={(value) => handleInputChange('consumoManualGasolina', value)}
-            placeholder="Ex: 12.5"
+            placeholder="Ex: 12.5 (opcional)"
             keyboardType="numeric"
             placeholderTextColor={Colors.light.text}
           />
         </View>
 
         {/* Consumo Etanol */}
+        {/* Consumo Etanol */}
         <View style={styles.inputGroup}>
-          <ThemedText style={styles.label}>Consumo Etanol (km/L) *</ThemedText>
+          <ThemedText style={styles.label}>Consumo Etanol (km/L)</ThemedText>
           <TextInput
             style={styles.input}
             value={form.consumoManualEtanol}
             onChangeText={(value) => handleInputChange('consumoManualEtanol', value)}
-            placeholder="Ex: 8.5"
+            placeholder="Ex: 8.5 (opcional)"
             keyboardType="numeric"
             placeholderTextColor={Colors.light.text}
           />

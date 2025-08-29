@@ -116,4 +116,32 @@ describe('veiculoService', () => {
 
     expect(result.success).toBe(true);
   });
+
+  it('deve chamar o método de inserção com os parâmetros corretos', async () => {
+    const veiculoForm: VeiculoForm = {
+      nome: 'Chevette',
+      capacidadeTanque: '45',
+      consumoManualGasolina: '12',
+      consumoManualEtanol: '8',
+      tipoPonteiro: 'Digital',
+      salvarLocalizacao: true,
+      lembreteCalibragem: true,
+      frequenciaLembrete: '15',
+    };
+
+    await veiculoService.criar(veiculoForm);
+
+    expect(mockRunAsync).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO Carro'),
+      'Chevette',
+      45,
+      12,
+      8,
+      'Digital',
+      1, // salvarLocalizacao
+      1, // lembreteCalibragem
+      15, // frequenciaLembrete
+      0 // exibirNoDashboard (default)
+    );
+  });
 });

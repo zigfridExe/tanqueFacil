@@ -8,8 +8,8 @@ export const veiculoService = {
       const veiculo: Omit<Veiculo, 'id'> = {
         nome: veiculoForm.nome,
         capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
-        consumoManualGasolina: parseFloat(veiculoForm.consumoManualGasolina),
-        consumoManualEtanol: parseFloat(veiculoForm.consumoManualEtanol),
+        consumoManualGasolina: (veiculoForm.consumoManualGasolina && parseFloat(veiculoForm.consumoManualGasolina)) || null,
+        consumoManualEtanol: (veiculoForm.consumoManualEtanol && parseFloat(veiculoForm.consumoManualEtanol)) || null,
         tipoPonteiro: veiculoForm.tipoPonteiro,
         salvarLocalizacao: veiculoForm.salvarLocalizacao ? 1 : 0,
         lembreteCalibragem: veiculoForm.lembreteCalibragem ? 1 : 0,
@@ -34,7 +34,7 @@ export const veiculoService = {
           veiculo.salvarLocalizacao,
           veiculo.lembreteCalibragem,
           veiculo.frequenciaLembrete,
-          veiculo.exibirNoDashboard,
+          veiculo.exibirNoDashboard
         );
         resolve({ success: true, message: 'Veículo criado com sucesso', data: { id: result.lastInsertRowId } });
       } catch (error: any) {
@@ -105,13 +105,13 @@ export const veiculoService = {
       const veiculo: Omit<Veiculo, 'id'> = {
         nome: veiculoForm.nome,
         capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
-        consumoManualGasolina: parseFloat(veiculoForm.consumoManualGasolina),
-        consumoManualEtanol: parseFloat(veiculoForm.consumoManualEtanol),
+        consumoManualGasolina: (veiculoForm.consumoManualGasolina && parseFloat(veiculoForm.consumoManualGasolina)) || null,
+        consumoManualEtanol: (veiculoForm.consumoManualEtanol && parseFloat(veiculoForm.consumoManualEtanol)) || null,
         tipoPonteiro: veiculoForm.tipoPonteiro,
         salvarLocalizacao: veiculoForm.salvarLocalizacao ? 1 : 0,
         lembreteCalibragem: veiculoForm.lembreteCalibragem ? 1 : 0,
         frequenciaLembrete: parseInt(veiculoForm.frequenciaLembrete),
-        dataUltimaCalibragem: veiculoForm.dataUltimaCalibragem || null,
+        dataUltimaCalibragem: veiculoForm.dataUltimaCalibragem || undefined,
         exibirNoDashboard: veiculoForm.exibirNoDashboard ? 1 : 0,
       };
 
@@ -134,7 +134,7 @@ export const veiculoService = {
           veiculo.frequenciaLembrete,
           veiculo.dataUltimaCalibragem,
           veiculo.exibirNoDashboard,
-          id,
+          id
         );
         if (result.changes > 0) {
           resolve({ success: true, message: 'Veículo atualizado com sucesso' });
@@ -155,7 +155,7 @@ export const veiculoService = {
         const result = await db.runAsync(
           `UPDATE Carro SET dataUltimaCalibragem = ? WHERE id = ?`,
           data,
-          carroId,
+          carroId
         );
         if (result.changes > 0) {
           resolve({ success: true, message: 'Data da última calibragem atualizada com sucesso' });
