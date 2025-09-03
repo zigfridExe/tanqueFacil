@@ -52,16 +52,7 @@ export default function HomeScreen() {
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0]; // AAAA-MM-DD
 
-    const veiculoForm: VeiculoForm = {
-      ...veiculoPrincipal,
-      capacidadeTanque: veiculoPrincipal.capacidadeTanque.toString(),
-      consumoManualGasolina: veiculoPrincipal.consumoManualGasolina.toString(),
-      consumoManualEtanol: veiculoPrincipal.consumoManualEtanol.toString(),
-      frequenciaLembrete: veiculoPrincipal.frequenciaLembrete.toString(),
-      dataUltimaCalibragem: formattedDate,
-    };
-
-    const result = await veiculoService.atualizar(veiculoPrincipal.id!, veiculoForm);
+    const result = await veiculoService.atualizarDataUltimaCalibragem(veiculoPrincipal.id!, formattedDate);
     if (result.success) {
       Alert.alert('Sucesso', 'Data da última calibragem atualizada!');
       carregarVeiculos(); // Atualiza os dados para atualizar a IU

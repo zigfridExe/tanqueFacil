@@ -26,11 +26,14 @@ const RemindersCard: React.FC<RemindersCardProps> = ({
   const veiculoPrincipal = veiculos.length > 0 ? veiculos[0] : null;
   const reminders: ReminderItem[] = [];
 
-  if (veiculoPrincipal && veiculoPrincipal.lembreteCalibragem) {
+  if (veiculoPrincipal && veiculoPrincipal.id && veiculoPrincipal.lembreteCalibragem) {
     if (isCalibrationDue) {
+      const hasRecord = !!veiculoPrincipal.dataUltimaCalibragem;
       reminders.push({
         id: veiculoPrincipal.id,
-        text: `🔧 Calibragem de pneus (${veiculoPrincipal.nome}): Vencida!`,
+        text: hasRecord
+          ? `🔧 Calibragem de pneus (${veiculoPrincipal.nome}): Vencida!`
+          : `🔧 Calibragem de pneus (${veiculoPrincipal.nome}): Veículo sem registro de calibragem`,
         isDue: true,
       });
     } else if (daysUntilCalibration !== null && daysUntilCalibration > 0) {
