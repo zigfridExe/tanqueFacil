@@ -22,17 +22,15 @@ export const abastecimentoService = {
     try {
       const db = await getDb();
       const result = await db.runAsync(
-        `INSERT INTO Abastecimentos (
-          data, quilometragem, litros, valorPago, valorTotal, precoPorLitro, 
+        `INSERT INTO Abastecimentos ( 
+          data, quilometragem, litros, valorPago, precoPorLitro, 
           tipoCombustivel, tipoTrajeto, calibragemPneus, 
           latitude, longitude, carroId
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           abastecimento.data,
           abastecimento.quilometragem,
           abastecimento.litros,
-          abastecimento.valorPago,
-          // manter compatibilidade com schema existente: valorTotal = valorPago
           abastecimento.valorPago,
           abastecimento.precoPorLitro,
           abastecimento.tipoCombustivel,
@@ -85,15 +83,13 @@ export const abastecimentoService = {
       const result = await db.runAsync(
         `UPDATE Abastecimentos SET 
           data = ?, quilometragem = ?, litros = ?, valorPago = ?, 
-          valorTotal = ?, precoPorLitro = ?, tipoCombustivel = ?, tipoTrajeto = ?, 
+          precoPorLitro = ?, tipoCombustivel = ?, tipoTrajeto = ?, 
           calibragemPneus = ?, latitude = ?, longitude = ?
           WHERE id = ?;`,
         [
           abastecimento.data,
           abastecimento.quilometragem,
           abastecimento.litros,
-          abastecimento.valorPago,
-          // manter compatibilidade com schema existente: valorTotal = valorPago
           abastecimento.valorPago,
           abastecimento.precoPorLitro,
           abastecimento.tipoCombustivel,

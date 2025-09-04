@@ -61,12 +61,14 @@ export default function RelatoriosScreen() {
       const primeiroAbastecimento = abastecimentosOrdenados[0];
       const ultimoAbastecimento = abastecimentosOrdenados[abastecimentosOrdenados.length - 1];
 
-      const distanciaPercorrida = ultimoAbasteamento.quilometragem - primeiroAbastecimento.quilometragem;
+      const distanciaPercorrida = ultimoAbastecimento.quilometragem - primeiroAbastecimento.quilometragem;
       overallTotalMileage += distanciaPercorrida; // Add to overall mileage
 
-      const totalLitros = abastecimentosOrdenados.reduce((sum, ab) => sum + ab.litros, 0);
+      // Para o cálculo de consumo, somamos os litros a partir do segundo abastecimento,
+      // pois o primeiro abastecimento é o ponto de partida da contagem de distância.
+      const totalLitrosConsiderados = abastecimentosOrdenados.slice(1).reduce((sum, ab) => sum + ab.litros, 0);
 
-      if (distanciaPercorrida <= 0 || totalLitros <= 0) {
+      if (distanciaPercorrida <= 0 || totalLitrosConsiderados <= 0) {
         resultados.push({
           veiculoId: veiculo.id!,
           nomeVeiculo: veiculo.nome,
@@ -76,7 +78,7 @@ export default function RelatoriosScreen() {
         return;
       }
 
-      const consumoMedio = distanciaPercorrida / totalLitros;
+      const consumoMedio = distanciaPercorrida / totalLitrosConsiderados;
 
       resultados.push({
         veiculoId: veiculo.id!,
