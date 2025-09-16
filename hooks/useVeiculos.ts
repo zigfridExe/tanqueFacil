@@ -3,8 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { veiculoService } from '../services/veiculoService';
 import { Veiculo, VeiculoForm } from '../types/veiculo';
 
-export const useVeiculos = () => {
-  const { vehicles, setVehicles, addVehicle, updateVehicle, removeVehicle } = useVehicleStore();
+export function useVeiculos() {
+  const { vehicles, setVehicles, addVehicle, updateVehicle, removeVehicle, selectedVehicle, selectVehicle } = useVehicleStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,6 +15,10 @@ export const useVeiculos = () => {
       const result = await veiculoService.buscarTodos();
       if (result.success && result.data) {
         setVehicles(result.data);
+        // Seleciona automaticamente o primeiro veículo se nenhum estiver selecionado
+        if ((!selectedVehicle || !selectedVehicle.id) && result.data.length > 0) {
+          selectVehicle(result.data[0]);
+        }
       } else {
         setError(result.message);
       }
@@ -23,7 +27,7 @@ export const useVeiculos = () => {
     } finally {
       setLoading(false);
     }
-  }, [setVehicles]);
+  }, [setVehicles, selectVehicle, selectedVehicle]);
 
   useEffect(() => {
     carregarVeiculos();
@@ -67,7 +71,18 @@ export const useVeiculos = () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await veiculoService.atualizar(id, veiculoForm);
+      // Buscar o veículo atual para manter os campos obrigatórios
+      const veiculoAtual = vehicles.find(v => v.id === id);
+      if (!veiculoAtual) {
+        setError('Veículo não encontrado para atualizar');
+        return false;
+      }
+      const veiculoParaAtualizar: Veiculo = {
+        ...veiculoAtual,
+        nome: veiculoForm.nome,
+        capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
+      };
+      const result = await veiculoService.atualizar(id, veiculoParaAtualizar);
       if (result.success && result.data) {
         const veiculo: Veiculo = {
           id: result.data.id,
@@ -95,7 +110,7 @@ export const useVeiculos = () => {
     } finally {
       setLoading(false);
     }
-  }, [updateVehicle]);
+  }, [updateVehicle, vehicles]);
 
   const excluirVeiculo = useCallback(async (id: number): Promise<boolean> => {
     try {
@@ -147,4 +162,4 @@ export const useVeiculos = () => {
     carregarVeiculos,
     limparErro,
   };
-};
+}

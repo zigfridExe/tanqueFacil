@@ -160,6 +160,16 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  devInfo: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  devText: {
+    fontSize: 12,
+    color: '#777',
+  },
   cardInfo: {
     marginBottom: 16,
   },

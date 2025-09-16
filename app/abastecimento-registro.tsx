@@ -1,5 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import * as Location from 'expo-location';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -51,16 +52,20 @@ export default function AbastecimentoRegistro() {
   const [valorPagoExibicao, setValorPagoExibicao] = useState('');
   const [quilometragemExibicao, setQuilometragemExibicao] = useState('');
 
-  useEffect(() => {
-    if (carroId) {
-      setForm(prev => ({ ...prev, carroId }));
-      const fetchVeiculo = async () => {
-        const veiculoEncontrado = await buscarVeiculoPorId(carroId);
-        setVeiculo(veiculoEncontrado || null);
-      };
-      fetchVeiculo();
-    }
-  }, [carroId, buscarVeiculoPorId]);
+
+  // Sempre recarrega o veículo ao focar na tela
+  useFocusEffect(
+    useCallback(() => {
+      if (carroId) {
+        setForm(prev => ({ ...prev, carroId }));
+        const fetchVeiculo = async () => {
+          const veiculoEncontrado = await buscarVeiculoPorId(carroId);
+          setVeiculo(veiculoEncontrado || null);
+        };
+        fetchVeiculo();
+      }
+    }, [carroId, buscarVeiculoPorId])
+  );
 
   const handleDateChange = (text: string) => {
     const formatted = text.replace(/[^0-9]/g, '').slice(0, 8);
@@ -140,10 +145,25 @@ export default function AbastecimentoRegistro() {
   const proceedToSave = async (calibragemRealizada: boolean) => {
     setModalVisible(false);
     try {
-      const finalForm = { 
+      let finalForm = { 
         ...form,
         calibragemPneus: calibragemRealizada,
       };
+
+      if (veiculo?.salvarLocalizacao) {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permissão Negada', 'Não foi possível obter a localização.');
+        } else {
+          const location = await Location.getCurrentPositionAsync({});
+          finalForm = {
+            ...finalForm,
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          };
+        }
+      }
+
       const sucesso = await criarAbastecimento(finalForm);
       
       if (sucesso) {
@@ -218,6 +238,23 @@ export default function AbastecimentoRegistro() {
             keyboardType="numeric"
             placeholderTextColor={Colors.light.text}
           />
+          {/* Indicador de status do GPS */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+            <View
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: 7,
+                backgroundColor: veiculo?.salvarLocalizacao ? '#2ecc40' : '#ff4136',
+                marginRight: 8,
+                borderWidth: 1,
+                borderColor: '#888',
+              }}
+            />
+            <ThemedText style={{ color: Colors.light.text, fontSize: 15 }}>
+              Registrar GPS
+            </ThemedText>
+          </View>
         </View>
 
         {/* Tipo de Combustível */}

@@ -64,6 +64,21 @@ export const abastecimentoService = {
     }
   },
 
+  // Buscar último abastecimento por veículo
+  async buscarUltimoAbastecimentoPorVeiculo(carroId: number): Promise<Abastecimento | null> {
+    try {
+      const db = await getDb();
+      const row = await db.getFirstAsync<Abastecimento>(
+        'SELECT * FROM Abastecimentos WHERE carroId = ? ORDER BY data DESC, quilometragem DESC LIMIT 1;',
+        [carroId]
+      );
+      return row || null;
+    } catch (error) {
+      console.error('Erro ao buscar último abastecimento:', error);
+      return null;
+    }
+  },
+
   // Buscar todos os abastecimentos
   async buscarTodosAbastecimentos(): Promise<Abastecimento[]> {
     try {

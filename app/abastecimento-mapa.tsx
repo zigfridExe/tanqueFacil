@@ -2,10 +2,10 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
-import { router } from 'expo-router';
-import React, { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, View, Dimensions, Alert } from 'react-native';
-import MapView, { Marker, PROVIDER_OSM } from 'react-native-maps';
+// import { router } from 'expo-router';
+import { useMemo } from 'react';
+import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
+import MapView, { Marker, UrlTile } from 'react-native-maps';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -67,8 +67,12 @@ export default function AbastecimentoMapaScreen() {
         <MapView
           style={styles.map}
           initialRegion={initialRegion}
-          provider={PROVIDER_OSM}
         >
+          <UrlTile
+            urlTemplate="https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maximumZ={19}
+            flipY={false}
+          />
           {abastecimentosComLocalizacao.map((abastecimento, index) => (
             <Marker
               key={index}

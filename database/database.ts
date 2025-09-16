@@ -1,3 +1,4 @@
+
 import * as SQLite from 'expo-sqlite';
 
 export type DatabaseResult = {
@@ -6,12 +7,12 @@ export type DatabaseResult = {
   data?: any;
 };
 
-let cachedDb: SQLite.SQLiteDatabase | null = null;
+
+let cachedDb: any = null;
 
 async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
   if (cachedDb) return cachedDb;
   const db = await SQLite.openDatabaseAsync('meu-tanque-facil.db');
-  // Otimizações e criação de schema
   await db.execAsync('PRAGMA journal_mode = WAL;');
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS Carro (
@@ -28,7 +29,6 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
       exibirNoDashboard INTEGER DEFAULT 1
     );
   `);
-
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS Abastecimentos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,12 +46,11 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
       FOREIGN KEY (carroId) REFERENCES Carro(id) ON DELETE CASCADE
     );
   `);
-
   await runMigrations(db);
-
   cachedDb = db;
   return db;
 }
+
 
 type Migration = {
   tableName: string;
@@ -77,8 +76,8 @@ const MIGRATIONS: Migration[] = [
 async function runMigrations(db: SQLite.SQLiteDatabase) {
   for (const migration of MIGRATIONS) {
     try {
-      const cols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info('${migration.tableName}');`);
-      const columnExists = cols.some((c) => c.name === migration.columnName);
+      const cols = await db.getAllAsync(`PRAGMA table_info('${migration.tableName}');`);
+      const columnExists = cols.some((c: any) => c.name === migration.columnName);
       if (!columnExists) {
         await db.execAsync(`ALTER TABLE ${migration.tableName} ADD COLUMN ${migration.columnName} ${migration.columnDefinition};`);
         if (migration.backfillQuery) {
@@ -92,6 +91,7 @@ async function runMigrations(db: SQLite.SQLiteDatabase) {
   }
 }
 
+
 export async function initDatabase(): Promise<DatabaseResult> {
   try {
     await ensureDb();
@@ -100,6 +100,7 @@ export async function initDatabase(): Promise<DatabaseResult> {
     return { success: false, message: e?.message || 'Falha ao inicializar banco' };
   }
 }
+
 
 export async function resetDatabase(): Promise<DatabaseResult> {
   try {
@@ -113,6 +114,7 @@ export async function resetDatabase(): Promise<DatabaseResult> {
     return { success: false, message: e?.message || 'Falha ao redefinir banco de dados.' };
   }
 }
+
 
 export default async function getDb(): Promise<SQLite.SQLiteDatabase> {
   return ensureDb();

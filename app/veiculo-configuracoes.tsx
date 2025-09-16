@@ -3,10 +3,10 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useVeiculos } from '@/hooks/useVeiculos';
 import { veiculoService } from '@/services/veiculoService';
-import { Veiculo, VeiculoForm } from '@/types/veiculo';
+import { Veiculo } from '@/types/veiculo';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function VeiculoConfiguracoesScreen() {
   const { veiculoId } = useLocalSearchParams<{ veiculoId: string }>();
@@ -255,6 +255,19 @@ export default function VeiculoConfiguracoesScreen() {
                   />
                 </View>
               )}
+            </View>
+
+            <View style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Localização</ThemedText>
+              <View style={styles.switchGroup}>
+                <ThemedText style={styles.label}>Registrar GPS nos abastecimentos</ThemedText>
+                <Switch
+                  value={veiculoAtual?.salvarLocalizacao || false}
+                  onValueChange={value => setVeiculoAtual(v => v ? { ...v, salvarLocalizacao: value } : v)}
+                  trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+                  thumbColor={veiculoAtual?.salvarLocalizacao ? Colors.light.background : Colors.light.text}
+                />
+              </View>
             </View>
 
             <View style={styles.section}>

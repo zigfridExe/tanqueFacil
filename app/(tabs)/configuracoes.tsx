@@ -1,18 +1,31 @@
-import { ThemedText } from '@/components/ThemedText';
+          import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import * as database from '@/database/database';
 import { useVeiculos } from '@/hooks/useVeiculos';
+import { abastecimentoService } from '@/services/abastecimentoService';
+import { useDeveloperStore } from '@/src/store/useDeveloperStore';
+import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { useVehicleStore } from '@/src/store/useVehicleStore';
+import * as Location from 'expo-location';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+
+
 
 export default function ConfiguracoesScreen() {
   const { carregarVeiculos } = useVeiculos();
-  const [salvarLocalizacao, setSalvarLocalizacao] = useState<boolean>(false);
-  const [notificacoesAtivas, setNotificacoesAtivas] = useState<boolean>(true);
-  const [temaEscuro, setTemaEscuro] = useState<boolean>(false);
-  const [backupAutomatico, setBackupAutomatico] = useState<boolean>(true);
+  const { showCoordinates, toggleShowCoordinates } = useDeveloperStore();
+  const { selectedVehicle } = useVehicleStore();
+  const {
+    notificationsEnabled,
+    darkMode,
+    automaticBackup,
+    toggleNotifications,
+    toggleDarkMode,
+    toggleAutomaticBackup,
+  } = useSettingsStore();
 
   const handleResetData = () => {
     Alert.alert(
@@ -51,10 +64,10 @@ export default function ConfiguracoesScreen() {
           <View style={styles.switchGroup}>
             <ThemedText style={styles.label}>Tema Escuro</ThemedText>
             <Switch
-              value={temaEscuro}
-              onValueChange={setTemaEscuro}
+              value={darkMode}
+              onValueChange={toggleDarkMode}
               trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={temaEscuro ? Colors.light.background : Colors.light.text}
+              thumbColor={darkMode ? Colors.light.background : Colors.light.text}
             />
           </View>
         </View>
@@ -62,30 +75,21 @@ export default function ConfiguracoesScreen() {
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Funcionalidades</ThemedText>
           <View style={styles.switchGroup}>
-            <ThemedText style={styles.label}>Salvar Localização</ThemedText>
-            <Switch
-              value={salvarLocalizacao}
-              onValueChange={setSalvarLocalizacao}
-              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={salvarLocalizacao ? Colors.light.background : Colors.light.text}
-            />
-          </View>
-          <View style={styles.switchGroup}>
             <ThemedText style={styles.label}>Notificações</ThemedText>
             <Switch
-              value={notificacoesAtivas}
-              onValueChange={setNotificacoesAtivas}
+              value={notificationsEnabled}
+              onValueChange={toggleNotifications}
               trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={notificacoesAtivas ? Colors.light.background : Colors.light.text}
+              thumbColor={notificationsEnabled ? Colors.light.background : Colors.light.text}
             />
           </View>
           <View style={styles.switchGroup}>
             <ThemedText style={styles.label}>Backup Automático</ThemedText>
             <Switch
-              value={backupAutomatico}
-              onValueChange={setBackupAutomatico}
+              value={automaticBackup}
+              onValueChange={toggleAutomaticBackup}
               trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={backupAutomatico ? Colors.light.background : Colors.light.text}
+              thumbColor={automaticBackup ? Colors.light.background : Colors.light.text}
             />
           </View>
         </View>
@@ -118,6 +122,100 @@ export default function ConfiguracoesScreen() {
             onPress={handleResetData}
           >
             <ThemedText style={styles.buttonText}>Limpar Todos os Dados</ThemedText>
+          </TouchableOpacity>
+        </View>
+
+  <View style={[styles.section, styles.developerSection]}>
+          <ThemedText style={styles.sectionTitle}>Opções de Desenvolvedor</ThemedText>
+          <View style={styles.switchGroup}>
+            <ThemedText style={styles.label}>Exibir coordenadas no histórico</ThemedText>
+            <Switch
+              value={showCoordinates}
+              onValueChange={toggleShowCoordinates}
+              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
+              thumbColor={showCoordinates ? Colors.light.background : Colors.light.text}
+            />
+          </View>
+          {/* Botão para solicitar permissão de localização (GPS) */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#00796B' }]}
+            onPress={async () => {
+              try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status === 'granted') {
+                  Alert.alert('Permissão concedida', 'Permissão de localização concedida com sucesso!');
+                } else {
+                  Alert.alert('Permissão negada', 'Permissão de localização não foi concedida.');
+                }
+              } catch {
+                Alert.alert('Erro', 'Erro ao solicitar permissão de localização.');
+              }
+            }}
+          >
+            <ThemedText style={styles.buttonText}>Solicitar permissão de localização (GPS)</ThemedText>
+          </TouchableOpacity>
+          {/* Botão para mostrar último abastecimento no console */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#333' }]}
+            onPress={async () => {
+              if (!selectedVehicle || !selectedVehicle.id) {
+                Alert.alert('Atenção', 'Selecione um veículo para consultar o último abastecimento.');
+                return;
+              }
+              const ultimo = await abastecimentoService.buscarUltimoAbastecimentoPorVeiculo(selectedVehicle.id);
+              if (ultimo) {
+                // Mostra no console do desenvolvedor
+                console.log('Último abastecimento:', ultimo);
+                Alert.alert('Sucesso', 'Informações do último abastecimento exibidas no console.');
+              } else {
+                Alert.alert('Nenhum registro', 'Nenhum abastecimento encontrado para este veículo.');
+              }
+            }}
+          >
+            <ThemedText style={styles.buttonText}>Mostrar último abastecimento no console</ThemedText>
+          </TouchableOpacity>
+
+          {/* Botão para mostrar todos os abastecimentos no console */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#555' }]}
+            onPress={async () => {
+              const todos = await abastecimentoService.buscarTodosAbastecimentos();
+              if (todos && todos.length > 0) {
+                console.log('Todos os abastecimentos:');
+                todos.forEach((ab, idx) => {
+                  console.log(`\n#${idx + 1}`);
+                  Object.entries(ab).forEach(([col, val]) => {
+                    console.log(`${col}: ${val}`);
+                  });
+                });
+                Alert.alert('Sucesso', 'Todos os abastecimentos foram exibidos no console.');
+              } else {
+                Alert.alert('Nenhum registro', 'Nenhum abastecimento encontrado no banco de dados.');
+              }
+            }}
+          >
+            <ThemedText style={styles.buttonText}>Mostrar todos abastecimentos no console</ThemedText>
+          </TouchableOpacity>
+
+          {/* Botão para mostrar localização atual no console */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#1976D2' }]}
+            onPress={async () => {
+              try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                  Alert.alert('Permissão negada', 'Permissão de localização não foi concedida.');
+                  return;
+                }
+                const location = await Location.getCurrentPositionAsync({});
+                console.log('Localização atual:', location);
+                Alert.alert('Sucesso', 'Localização atual exibida no console.');
+              } catch {
+                Alert.alert('Erro', 'Erro ao obter localização.');
+              }
+            }}
+          >
+            <ThemedText style={styles.buttonText}>Mostrar localização atual no console</ThemedText>
           </TouchableOpacity>
         </View>
 
@@ -166,6 +264,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
+  },
+  developerSection: {
+    backgroundColor: '#fff8e1',
+    borderColor: '#ffc107',
+    borderWidth: 1,
   },
   sectionTitle: {
     fontSize: 20,

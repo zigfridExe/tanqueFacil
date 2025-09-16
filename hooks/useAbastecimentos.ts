@@ -7,6 +7,22 @@ export const useAbastecimentos = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+
+  // Buscar último abastecimento por veículo
+  const buscarUltimoAbastecimento = useCallback(async (carroId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+        const ultimo = await abastecimentoService.buscarUltimoAbastecimentoPorVeiculo(carroId);
+        return ultimo;
+    } catch (err) {
+      setError('Erro ao buscar último abastecimento');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Criar novo abastecimento
   const criarAbastecimento = useCallback(async (abastecimento: AbastecimentoForm): Promise<boolean> => {
     setLoading(true);
@@ -22,7 +38,7 @@ export const useAbastecimentos = () => {
         setError('Erro ao criar abastecimento');
         return false;
       }
-    } catch (err) {
+      } catch {
       setError('Erro inesperado ao criar abastecimento');
       return false;
     } finally {
@@ -38,7 +54,7 @@ export const useAbastecimentos = () => {
     try {
       const dados = await abastecimentoService.buscarAbastecimentosPorVeiculo(carroId);
       setAbastecimentos(dados);
-    } catch (err) {
+      } catch {
       setError('Erro ao carregar abastecimentos');
       setAbastecimentos([]);
     } finally {
@@ -54,7 +70,7 @@ export const useAbastecimentos = () => {
     try {
       const dados = await abastecimentoService.buscarTodosAbastecimentos();
       setAbastecimentos(dados);
-    } catch (err) {
+      } catch {
       setError('Erro ao carregar abastecimentos');
       setAbastecimentos([]);
     } finally {
@@ -77,7 +93,7 @@ export const useAbastecimentos = () => {
         setError('Erro ao atualizar abastecimento');
         return false;
       }
-    } catch (err) {
+      } catch {
       setError('Erro inesperado ao atualizar abastecimento');
       return false;
     } finally {
@@ -100,7 +116,7 @@ export const useAbastecimentos = () => {
         setError('Erro ao excluir abastecimento');
         return false;
       }
-    } catch (err) {
+      } catch {
       setError('Erro inesperado ao excluir abastecimento');
       return false;
     } finally {
@@ -112,7 +128,7 @@ export const useAbastecimentos = () => {
   const calcularConsumoMedio = useCallback(async (carroId: number) => {
     try {
       return await abastecimentoService.calcularConsumoMedio(carroId);
-    } catch (err) {
+      } catch {
       setError('Erro ao calcular consumo médio');
       return { gasolina: 0, etanol: 0 };
     }
@@ -130,7 +146,7 @@ export const useAbastecimentos = () => {
     } else {
       await carregarTodosAbastecimentos();
     }
-  }, [carregarAbastecimentosPorVeiculo, carregarTodosAbastecimentos]);
+    }, [carregarAbastecimentosPorVeiculo, carregarTodosAbastecimentos]);
 
   return {
     abastecimentos,
@@ -143,6 +159,7 @@ export const useAbastecimentos = () => {
     excluirAbastecimento,
     calcularConsumoMedio,
     limparErro,
-    refresh
+    refresh,
+    buscarUltimoAbastecimento
   };
 };
