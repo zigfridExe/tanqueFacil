@@ -1,12 +1,20 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
+import { useVeiculos } from '@/hooks/useVeiculos';
 import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
+
 const QuickActions = () => {
-  const handleNavegarPara = (rota: string) => {
-    router.push(rota);
+  const { veiculos, selectedVehicle } = useVeiculos();
+
+  const handleNavegarPara = (rota: string, params?: Record<string, any>) => {
+    if (params) {
+      router.push({ pathname: rota as any, params });
+    } else {
+      router.push(rota as any);
+    }
   };
 
   return (
@@ -21,7 +29,16 @@ const QuickActions = () => {
 
       <TouchableOpacity
         style={styles.actionCard}
-        onPress={() => handleNavegarPara('/abastecimento-registro')}
+        onPress={() => {
+          // Usa o veículo selecionado ou o primeiro da lista
+          const carroId = selectedVehicle?.id || veiculos[0]?.id;
+          if (carroId) {
+            handleNavegarPara('/abastecimento-registro', { carroId });
+          } else {
+            // Se não houver veículo, apenas navega sem param (ou pode exibir alerta)
+            handleNavegarPara('/abastecimento-registro');
+          }
+        }}
       >
         <ThemedText style={styles.actionCardTitle}>⛽ Abastecer</ThemedText>
         <ThemedText style={styles.actionCardSubtitle}>Registrar</ThemedText>

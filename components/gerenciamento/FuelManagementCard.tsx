@@ -119,7 +119,15 @@ export default function FuelManagementCard({
       <TouchableOpacity
         style={[styles.button, { marginTop: 20, opacity: veiculoAtual ? 1 : 0.5 }]}
         disabled={!veiculoAtual}
-        onPress={onRegisterSupply}
+        onPress={() => {
+          if (veiculoAtual?.id) {
+            // Navega passando o id do veículo
+            // @ts-ignore
+            import('expo-router').then(({ router }) => {
+              router.push({ pathname: '/abastecimento-registro', params: { carroId: veiculoAtual.id } });
+            });
+          }
+        }}
       >
         <ThemedText style={styles.buttonText}>Registrar Abastecimento</ThemedText>
       </TouchableOpacity>

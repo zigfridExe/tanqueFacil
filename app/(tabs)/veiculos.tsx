@@ -1,13 +1,13 @@
 import { router, useFocusEffect } from 'expo-router';
 import React from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -21,8 +21,7 @@ export default function VeiculosScreen() {
     loading, 
     error, 
     excluirVeiculo, 
-    carregarVeiculos,
-    limparErro 
+    carregarVeiculos
   } = useVeiculos();
 
   useFocusEffect(
@@ -87,7 +86,7 @@ export default function VeiculosScreen() {
           Ponteiro: {item.tipoPonteiro} | Calibragem: {item.lembreteCalibragem ? 'Ativo' : 'Inativo'}
         </ThemedText>
       </View>
-      
+
       <View style={styles.veiculoAcoes}>
         <TouchableOpacity
           style={[styles.actionButton, styles.configButton]}
@@ -102,7 +101,14 @@ export default function VeiculosScreen() {
         >
           <ThemedText style={styles.actionButtonText}>Editar</ThemedText>
         </TouchableOpacity>
-        
+
+        <TouchableOpacity
+          style={[styles.actionButton, styles.abastecerButton]}
+          onPress={() => router.push({ pathname: '/abastecimento-registro', params: { carroId: item.id } })}
+        >
+          <ThemedText style={styles.actionButtonText}>Abastecer</ThemedText>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.actionButton, styles.excluirButton]}
           onPress={() => handleExcluirVeiculo(item)}
@@ -240,6 +246,9 @@ const styles = StyleSheet.create({
   },
   excluirButton: {
     backgroundColor: '#ff6b6b',
+  },
+  abastecerButton: {
+    backgroundColor: Colors.light.tint,
   },
   actionButtonText: {
     color: Colors.light.background,

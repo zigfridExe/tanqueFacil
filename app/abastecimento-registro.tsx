@@ -1,4 +1,5 @@
-import * as Location from 'expo-location';
+  // Debug: logar o veiculo sempre que renderizar
+  import * as Location from 'expo-location';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
@@ -28,10 +29,16 @@ import { Veiculo } from '../types/veiculo';
 export default function AbastecimentoRegistro() {
   const params = useLocalSearchParams();
   const carroId = params.carroId ? parseInt(params.carroId as string) : 0;
+  console.log('DEBUG carroId:', carroId);
   const { criarAbastecimento, loading, error } = useAbastecimentos();
   const { buscarVeiculoPorId, veiculos, loading: loadingVeiculos } = useVeiculos();
 
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
+  // Debug: logar sempre que renderizar o componente e o valor de veiculo
+  console.log('Renderizou AbastecimentoRegistro');
+  console.log('DEBUG veiculo:', veiculo);
+  // Debug: logar o veiculo sempre que renderizar
+  console.log('DEBUG veiculo:', veiculo);
   const [isModalVisible, setModalVisible] = useState(false);
   
   const [form, setForm] = useState<AbastecimentoForm>({
@@ -59,7 +66,9 @@ export default function AbastecimentoRegistro() {
       if (carroId) {
         setForm(prev => ({ ...prev, carroId }));
         const fetchVeiculo = async () => {
+          console.log('DEBUG buscando veículo', carroId);
           const veiculoEncontrado = await buscarVeiculoPorId(carroId);
+          console.log('DEBUG veiculoEncontrado:', veiculoEncontrado);
           setVeiculo(veiculoEncontrado || null);
         };
         fetchVeiculo();

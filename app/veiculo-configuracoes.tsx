@@ -61,6 +61,7 @@ export default function VeiculoConfiguracoesScreen() {
       lembreteCalibragem: lembreteCalibragem,
       frequenciaLembrete: parseInt(frequenciaLembrete),
       exibirNoDashboard: exibirNoDashboard,
+      salvarLocalizacao: veiculoAtual?.salvarLocalizacao || false,
     };
 
     const result = await veiculoService.atualizar(veiculoAtual.id as number, veiculoForm);
@@ -73,11 +74,6 @@ export default function VeiculoConfiguracoesScreen() {
     }
   }, [veiculoAtual, nome, capacidadeTanque, consumoManualGasolina, consumoManualEtanol, tipoPonteiro, lembreteCalibragem, frequenciaLembrete, exibirNoDashboard, consumoType, carregarVeiculos]);
 
-  const handleEditVehicle = () => {
-    if (veiculoAtual) {
-      router.push({ pathname: '/veiculo-cadastro', params: { veiculoId: veiculoAtual.id } });
-    }
-  };
 
   if (loading) {
     return (

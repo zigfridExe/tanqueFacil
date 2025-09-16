@@ -153,6 +153,8 @@ export function useVeiculos() {
 
   return {
     veiculos: vehicles,
+    selectedVehicle,
+    selectVehicle,
     loading,
     error,
     criarVeiculo,
