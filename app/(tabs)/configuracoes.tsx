@@ -217,6 +217,49 @@ export default function ConfiguracoesScreen() {
           >
             <ThemedText style={styles.buttonText}>Mostrar localização atual no console</ThemedText>
           </TouchableOpacity>
+
+          {/* Botão para verificar o status da conexão com o banco de dados */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#FF8F00' }]}
+            onPress={async () => {
+              const status = await database.getDatabaseStatus();
+              console.log('Status do Banco de Dados:', status);
+              Alert.alert(
+                'Status da Conexão',
+                `Conectado: ${status.connected}\nMensagem: ${status.message}`
+              );
+            }}
+          >
+            <ThemedText style={styles.buttonText}>Verificar Status do Banco</ThemedText>
+          </TouchableOpacity>
+
+          {/* Botão para forçar a reconexão com o banco de dados */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#D32F2F' }]}
+            onPress={async () => {
+              Alert.alert(
+                'Forçar Reconexão',
+                'Isso fechará a conexão atual e tentará uma nova. Deseja continuar?',
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  {
+                    text: 'Continuar',
+                    style: 'destructive',
+                    onPress: async () => {
+                      const result = await database.forceReconnect();
+                      if (result.success) {
+                        Alert.alert('Sucesso', result.message);
+                      } else {
+                        Alert.alert('Erro', result.message);
+                      }
+                    },
+                  },
+                ]
+              );
+            }}
+          >
+            <ThemedText style={styles.buttonText}>Forçar Reconexão com o Banco</ThemedText>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>

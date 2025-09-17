@@ -119,3 +119,45 @@ export async function resetDatabase(): Promise<DatabaseResult> {
 export default async function getDb(): Promise<SQLite.SQLiteDatabase> {
   return ensureDb();
 }
+
+export async function getDatabaseStatus(): Promise<{ connected: boolean; message: string }> {
+  console.log('Verificando status do banco de dados...');
+  if (!cachedDb) {
+    console.log('Status: Desconectado (cache nulo).');
+    return { connected: false, message: 'Desconectado (cache nulo).' };
+  }
+  try {
+    // A API expo-sqlite não tem um método "isOpen", então fazemos uma consulta simples.
+    const result = await cachedDb.getFirstAsync('PRAGMA user_version;');
+    if (result && typeof result.user_version === 'number') {
+      console.log('Status: Conectado. Versão do DB:', result.user_version);
+      return { connected: true, message: `Conectado (versão: ${result.user_version})` };
+    } else {
+      throw new Error('Resposta inesperada da verificação de status.');
+    }
+  } catch (e: any) {
+    console.error('Status: Erro na conexão.', e);
+    cachedDb = null; // Limpa o cache se a conexão falhou
+    return { connected: false, message: `Erro na conexão: ${e.message}` };
+  }
+}
+
+export async function forceReconnect(): Promise<DatabaseResult> {
+  console.log('Forçando reconexão com o banco de dados...');
+  try {
+    if (cachedDb) {
+      console.log('Fechando conexão existente...');
+      await cachedDb.closeAsync();
+      cachedDb = null;
+      console.log('Conexão fechada.');
+    }
+    
+    console.log('Re-inicializando conexão...');
+    await ensureDb();
+    console.log('Reconexão bem-sucedida.');
+    return { success: true, message: 'Reconexão forçada com sucesso.' };
+  } catch (e: any) {
+    console.error('Falha ao forçar reconexão:', e);
+    return { success: false, message: `Falha ao forçar reconexão: ${e.message}` };
+  }
+}
