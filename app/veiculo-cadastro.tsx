@@ -5,7 +5,6 @@ import {
   Alert,
   ScrollView,
   StyleSheet,
-  Switch,
   TextInput,
   TouchableOpacity,
   View
@@ -50,7 +49,7 @@ export default function VeiculoCadastro() {
                 Alert.alert('Erro', 'Veículo não encontrado.');
                 router.back();
               }
-            } catch (err) {
+            } catch {
               if (isActive) {
                 Alert.alert('Erro', 'Não foi possível carregar os dados do veículo.');
                 router.back();
