@@ -1,6 +1,7 @@
 // Usar wrapper do DB para facilitar mock em testes e evitar efeitos de módulo
 import getDb from '../database/database';
 import { Abastecimento } from '../types/veiculo';
+import { veiculoService } from './veiculoService';
 
 export interface AbastecimentoForm {
   data: string;
@@ -133,6 +134,27 @@ export const abastecimentoService = {
     } catch (error) {
       console.error('Erro ao excluir abastecimento:', error);
       return false;
+    }
+  },
+
+  // Buscar última quilometragem de referência
+  async buscarUltimaQuilometragem(carroId: number): Promise<number | null> {
+    try {
+      const ultimoAbastecimento = await this.buscarUltimoAbastecimentoPorVeiculo(carroId);
+      if (ultimoAbastecimento) {
+        return ultimoAbastecimento.quilometragem;
+      }
+
+      // Se não houver abastecimento, buscar a quilometragem inicial do veículo
+      const resultadoVeiculo = await veiculoService.buscarPorId(carroId);
+      if (resultadoVeiculo.success && resultadoVeiculo.data) {
+        return resultadoVeiculo.data.quilometragem;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Erro ao buscar última quilometragem:', error);
+      return null;
     }
   },
 

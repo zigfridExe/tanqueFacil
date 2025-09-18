@@ -134,6 +134,21 @@ export const useAbastecimentos = () => {
     }
   }, []);
 
+  // Buscar última quilometragem
+  const buscarUltimaQuilometragem = useCallback(async (carroId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const km = await abastecimentoService.buscarUltimaQuilometragem(carroId);
+      return km;
+    } catch (err) {
+      setError('Erro ao buscar última quilometragem');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Limpar erro
   const limparErro = useCallback(() => {
     setError(null);
@@ -160,6 +175,7 @@ export const useAbastecimentos = () => {
     calcularConsumoMedio,
     limparErro,
     refresh,
-    buscarUltimoAbastecimento
+    buscarUltimoAbastecimento,
+    buscarUltimaQuilometragem
   };
 };

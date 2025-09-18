@@ -30,15 +30,11 @@ export default function AbastecimentoRegistro() {
   const params = useLocalSearchParams();
   const carroId = params.carroId ? parseInt(params.carroId as string) : 0;
   console.log('DEBUG carroId:', carroId);
-  const { criarAbastecimento, loading, error } = useAbastecimentos();
+  const { criarAbastecimento, loading, error, buscarUltimaQuilometragem } = useAbastecimentos();
   const { buscarVeiculoPorId, veiculos, loading: loadingVeiculos } = useVeiculos();
 
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
-  // Debug: logar sempre que renderizar o componente e o valor de veiculo
-  console.log('Renderizou AbastecimentoRegistro');
-  console.log('DEBUG veiculo:', veiculo);
-  // Debug: logar o veiculo sempre que renderizar
-  console.log('DEBUG veiculo:', veiculo);
+  const [ultimaQuilometragem, setUltimaQuilometragem] = useState<number | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
   
   const [form, setForm] = useState<AbastecimentoForm>({
@@ -65,15 +61,18 @@ export default function AbastecimentoRegistro() {
     useCallback(() => {
       if (carroId) {
         setForm(prev => ({ ...prev, carroId }));
-        const fetchVeiculo = async () => {
+        const fetchVeiculoEQuilometragem = async () => {
           console.log('DEBUG buscando veículo', carroId);
           const veiculoEncontrado = await buscarVeiculoPorId(carroId);
           console.log('DEBUG veiculoEncontrado:', veiculoEncontrado);
           setVeiculo(veiculoEncontrado || null);
+
+          const km = await buscarUltimaQuilometragem(carroId);
+          setUltimaQuilometragem(km);
         };
-        fetchVeiculo();
+        fetchVeiculoEQuilometragem();
       }
-    }, [carroId, buscarVeiculoPorId])
+    }, [carroId, buscarVeiculoPorId, buscarUltimaQuilometragem])
   );
 
   const handleDateChange = (text: string) => {
@@ -247,6 +246,11 @@ export default function AbastecimentoRegistro() {
             keyboardType="numeric"
             placeholderTextColor={Colors.light.text}
           />
+          {ultimaQuilometragem !== null && (
+            <ThemedText style={styles.helperText}>
+              Última quilometragem registrada: {ultimaQuilometragem} km
+            </ThemedText>
+          )}
           {/* Indicador de status do GPS */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
             <View
@@ -648,5 +652,11 @@ const styles = StyleSheet.create({
     color: Colors.light.background,
     fontSize: 18,
     fontWeight: '600',
+  },
+  helperText: {
+    fontSize: 14,
+    color: Colors.light.text,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
