@@ -7,7 +7,7 @@ export const veiculoService = {
     return new Promise(async (resolve) => {
       const veiculo = {
         nome: veiculoForm.nome,
-        capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
+        quilometragem: parseFloat(veiculoForm.quilometragem),
         consumoManualGasolina: null, // Default value
         consumoManualEtanol: null, // Default value
         tipoPonteiro: 'Analógico', // Default value
@@ -22,12 +22,13 @@ export const veiculoService = {
         const db = await getDb();
         const result = await db.runAsync(
           `INSERT INTO Carro (
-            nome, capacidadeTanque, consumoManualGasolina, consumoManualEtanol,
+            nome, capacidadeTanque, quilometragem, consumoManualGasolina, consumoManualEtanol,
             tipoPonteiro, salvarLocalizacao, lembreteCalibragem, frequenciaLembrete,
             exibirNoDashboard
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           veiculo.nome,
           veiculo.capacidadeTanque,
+          veiculo.quilometragem,
           veiculo.consumoManualGasolina,
           veiculo.consumoManualEtanol,
           veiculo.tipoPonteiro,
@@ -66,6 +67,7 @@ export const veiculoService = {
           id: row.id,
           nome: row.nome,
           capacidadeTanque: row.capacidadeTanque,
+          quilometragem: row.quilometragem,
           consumoManualGasolina: row.consumoManualGasolina,
           consumoManualEtanol: row.consumoManualEtanol,
           tipoPonteiro: row.tipoPonteiro,
@@ -93,6 +95,7 @@ export const veiculoService = {
             id: row.id,
             nome: row.nome,
             capacidadeTanque: row.capacidadeTanque,
+            quilometragem: row.quilometragem,
             consumoManualGasolina: row.consumoManualGasolina,
             consumoManualEtanol: row.consumoManualEtanol,
             tipoPonteiro: row.tipoPonteiro,
@@ -119,13 +122,14 @@ export const veiculoService = {
         const db = await getDb();
         const result = await db.runAsync(
           `UPDATE Carro SET 
-            nome = ?, capacidadeTanque = ?, consumoManualGasolina = ?, 
+            nome = ?, capacidadeTanque = ?, quilometragem = ?, consumoManualGasolina = ?, 
             consumoManualEtanol = ?, tipoPonteiro = ?, salvarLocalizacao = ?, 
             lembreteCalibragem = ?, frequenciaLembrete = ?, dataUltimaCalibragem = ?,
             exibirNoDashboard = ?
           WHERE id = ?`,
           veiculo.nome,
           veiculo.capacidadeTanque,
+          veiculo.quilometragem,
           veiculo.consumoManualGasolina,
           veiculo.consumoManualEtanol,
           veiculo.tipoPonteiro,

@@ -18,6 +18,7 @@ async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
     CREATE TABLE IF NOT EXISTS Carro (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT NOT NULL,
+      quilometragem REAL NOT NULL,
       capacidadeTanque REAL NOT NULL,
       consumoManualGasolina REAL,
       consumoManualEtanol REAL,
@@ -70,6 +71,11 @@ const MIGRATIONS: Migration[] = [
     tableName: 'Carro',
     columnName: 'exibirNoDashboard',
     columnDefinition: 'INTEGER DEFAULT 1',
+  },
+  {
+    tableName: 'Carro',
+    columnName: 'quilometragem',
+    columnDefinition: 'REAL DEFAULT 0',
   },
 ];
 

@@ -24,6 +24,7 @@ export default function VeiculoCadastro() {
   const [form, setForm] = useState<VeiculoForm>({
     nome: '',
     capacidadeTanque: '',
+    quilometragem: '',
   });
 
   const [currentVeiculo, setCurrentVeiculo] = useState<Veiculo | null>(null);
@@ -43,6 +44,7 @@ export default function VeiculoCadastro() {
                 setForm({
                   nome: veiculo.nome,
                   capacidadeTanque: veiculo.capacidadeTanque.toString(),
+                  quilometragem: veiculo.quilometragem.toString(),
                 });
               } else if (isActive) {
                 Alert.alert('Erro', 'Veículo não encontrado.');
@@ -79,6 +81,10 @@ export default function VeiculoCadastro() {
       Alert.alert('Erro', 'Por favor, informe a capacidade do tanque');
       return false;
     }
+    if (!form.quilometragem || parseFloat(form.quilometragem.replace(',', '.')) <= 0) {
+      Alert.alert('Erro', 'Por favor, informe a quilometragem atual do veículo');
+      return false;
+    }
     return true;
   };
 
@@ -88,6 +94,7 @@ export default function VeiculoCadastro() {
     const dadosParaSalvar: VeiculoForm = {
       nome: form.nome,
       capacidadeTanque: form.capacidadeTanque.replace(',', '.'),
+      quilometragem: form.quilometragem.replace(',', '.'),
     };
 
     let sucesso = false;
@@ -134,6 +141,19 @@ export default function VeiculoCadastro() {
             value={form.capacidadeTanque}
             onChangeText={(value) => handleInputChange('capacidadeTanque', value)}
             placeholder="Ex: 50"
+            keyboardType="numeric"
+            placeholderTextColor={Colors.light.text}
+          />
+        </View>
+
+        {/* Quilometragem Atual */}
+        <View style={styles.inputGroup}>
+          <ThemedText style={styles.label}>Quilometragem Atual (km) *</ThemedText>
+          <TextInput
+            style={styles.input}
+            value={form.quilometragem}
+            onChangeText={(value) => handleInputChange('quilometragem', value)}
+            placeholder="Ex: 25000"
             keyboardType="numeric"
             placeholderTextColor={Colors.light.text}
           />

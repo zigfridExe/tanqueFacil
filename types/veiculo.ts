@@ -2,6 +2,7 @@ export interface Veiculo {
   id?: number;
   nome: string;
   capacidadeTanque: number;
+  quilometragem: number;
   consumoManualGasolina: number | null;
   consumoManualEtanol: number | null;
   tipoPonteiro: 'Analógico' | 'Digital';
@@ -15,6 +16,7 @@ export interface Veiculo {
 export interface VeiculoForm {
   nome: string;
   capacidadeTanque: string;
+  quilometragem: string;
 }
 
 export interface Abastecimento {
