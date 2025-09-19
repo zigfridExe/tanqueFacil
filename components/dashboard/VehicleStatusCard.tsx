@@ -36,11 +36,23 @@ const VehicleStatusCard: React.FC<VehicleStatusCardProps> = ({ veiculos, loading
               </View>
               <View style={styles.statusItem}>
                 <ThemedText style={styles.statusLabel}>Consumo Gasolina</ThemedText>
-                <ThemedText style={styles.statusValue}>{veiculo.consumoManualGasolina} km/L</ThemedText>
+                <ThemedText style={styles.statusValue}>
+                  {veiculo.consumoMedioGasolina !== undefined && veiculo.consumoMedioGasolina !== 0
+                    ? `${veiculo.consumoMedioGasolina} km/L (Médio)`
+                    : veiculo.consumoManualGasolina !== null
+                    ? `${veiculo.consumoManualGasolina} km/L (Manual)`
+                    : 'N/A'}
+                </ThemedText>
               </View>
               <View style={styles.statusItem}>
                 <ThemedText style={styles.statusLabel}>Consumo Etanol</ThemedText>
-                <ThemedText style={styles.statusValue}>{veiculo.consumoManualEtanol} km/L</ThemedText>
+                <ThemedText style={styles.statusValue}>
+                  {veiculo.consumoMedioEtanol !== undefined && veiculo.consumoMedioEtanol !== 0
+                    ? `${veiculo.consumoMedioEtanol} km/L (Médio)`
+                    : veiculo.consumoManualEtanol !== null
+                    ? `${veiculo.consumoManualEtanol} km/L (Manual)`
+                    : 'N/A'}
+                </ThemedText>
               </View>
             </View>
           </View>

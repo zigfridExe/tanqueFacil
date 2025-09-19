@@ -1,5 +1,6 @@
 import { useVehicleStore } from '@src/store';
 import { useCallback, useEffect, useState } from 'react';
+import { abastecimentoService } from '../services/abastecimentoService';
 import { veiculoService } from '../services/veiculoService';
 import { Veiculo, VeiculoForm } from '../types/veiculo';
 
@@ -14,7 +15,17 @@ export function useVeiculos() {
       setError(null);
       const result = await veiculoService.buscarTodos();
       if (result.success && result.data) {
-        setVehicles(result.data);
+        const veiculosComConsumo = await Promise.all(
+          result.data.map(async (veiculo: Veiculo) => {
+            const consumo = await abastecimentoService.calcularConsumoMedio(veiculo.id!);
+            return {
+              ...veiculo,
+              consumoMedioGasolina: consumo.gasolina,
+              consumoMedioEtanol: consumo.etanol,
+            };
+          })
+        );
+        setVehicles(veiculosComConsumo);
         // Seleciona automaticamente o primeiro veículo se nenhum estiver selecionado
         if ((!selectedVehicle || !selectedVehicle.id) && result.data.length > 0) {
           selectVehicle(result.data[0]);

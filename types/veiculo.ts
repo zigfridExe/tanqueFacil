@@ -5,6 +5,8 @@ export interface Veiculo {
   quilometragem: number;
   consumoManualGasolina: number | null;
   consumoManualEtanol: number | null;
+  consumoMedioGasolina?: number;
+  consumoMedioEtanol?: number;
   tipoPonteiro: 'Analógico' | 'Digital';
   salvarLocalizacao: boolean;
   lembreteCalibragem: boolean;
