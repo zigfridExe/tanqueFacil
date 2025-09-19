@@ -4,7 +4,8 @@ import { useAbastecimentos } from '@/hooks/useAbastecimentos';
 import { consumoKmPorLitro } from '@/src/utils/consumo';
 import { formatBRL } from '@/src/utils/format';
 import { Abastecimento } from '@/types/veiculo';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 export default function QuickStats() {
@@ -16,10 +17,12 @@ export default function QuickStats() {
     consumoMedio: 0,
   });
 
-  useEffect(() => {
-    // Garante que o hook de abastecimentos seja carregado
-    carregarTodosAbastecimentos();
-  }, [carregarTodosAbastecimentos]);
+  // Adiciona o useFocusEffect para recarregar os dados quando a tela recebe foco
+  useFocusEffect(
+    useCallback(() => {
+      carregarTodosAbastecimentos();
+    }, [carregarTodosAbastecimentos])
+  );
 
   useEffect(() => {
     const currentMonth = new Date().getMonth();

@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
+import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -16,6 +17,13 @@ export default function HomeScreen() {
 
   const [isCalibrationDue, setIsCalibrationDue] = useState(false);
   const [daysUntilCalibration, setDaysUntilCalibration] = useState<number | null>(null);
+
+  // Adiciona o useFocusEffect para recarregar os dados quando a tela recebe foco
+  useFocusEffect(
+    useCallback(() => {
+      carregarVeiculos();
+    }, [carregarVeiculos])
+  );
 
   useEffect(() => {
     if (veiculoPrincipal && veiculoPrincipal.lembreteCalibragem && veiculoPrincipal.frequenciaLembrete) {
