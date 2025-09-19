@@ -9,7 +9,6 @@ import RemindersCard from '../../components/dashboard/RemindersCard';
 import VehicleStatusCard from '../../components/dashboard/VehicleStatusCard';
 import { useVeiculos } from '../../hooks/useVeiculos';
 import { veiculoService } from '../../services/veiculoService';
-import { VeiculoForm } from '../../types/veiculo';
 
 export default function HomeScreen() {
   const { veiculos, loading, carregarVeiculos } = useVeiculos();
