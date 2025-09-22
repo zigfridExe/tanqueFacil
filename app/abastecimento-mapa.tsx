@@ -2,11 +2,12 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Dimensions, StyleSheet, View } from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Dimensions, StyleSheet, View, Pressable, Linking, Platform, Text } from 'react-native';
+import MapView, { Marker, UrlTile, Region, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -19,6 +20,28 @@ export default function AbastecimentoMapaScreen() {
   const [locating, setLocating] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY || '';
+  const mapRef = useRef<MapView>(null);
+  const [styleId, setStyleId] = useState<'osm' | 'streets' | 'dark'>('osm');
+  const navigation = useNavigation();
+  // Opcional: manter estado selecionado se precisar, mas o resumo agora vai no Callout
+  const [selected, setSelected] = useState<{
+    lat: number;
+    lon: number;
+    title?: string;
+    resumo?: {
+      quantidade: number;
+      dataMaisRecente: string | undefined;
+      totalLitros: number;
+      precoMedio: number;
+      totalGasto: number;
+    };
+  } | null>(null);
+  const [previewShown, setPreviewShown] = useState(false);
+
+  // Define o título apenas na AppBar
+  useLayoutEffect(() => {
+    navigation.setOptions?.({ title: 'Mapa de Abastecimentos' });
+  }, [navigation]);
 
   useEffect(() => {
     // Carregar abastecimentos do banco
@@ -75,6 +98,95 @@ export default function AbastecimentoMapaScreen() {
     };
   }, [userLocation, abastecimentos]);
 
+  const goToUser = () => {
+    const target = userLocation
+      ? { ...userLocation, latitudeDelta: LATITUDE_DELTA, longitudeDelta: LONGITUDE_DELTA }
+      : initialRegion;
+    mapRef.current?.animateToRegion(target as Region, 450);
+  };
+
+  const cycleStyle = () => {
+    setStyleId((prev) => (prev === 'osm' ? 'streets' : prev === 'streets' ? 'dark' : 'osm'));
+  };
+
+  const tileUrl = useMemo(() => {
+    if (!MAPTILER_KEY) return '';
+    const base = 'https://api.maptiler.com/maps';
+    const variant = styleId === 'osm' ? 'openstreetmap' : styleId === 'streets' ? 'streets-v2' : 'streets-v2-dark';
+    return `${base}/${variant}/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`;
+  }, [MAPTILER_KEY, styleId]);
+
+  // Distância Haversine em km
+  const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Calcula resumo para um ponto base considerando raio de 500m
+  const getResumo500m = (lat: number, lon: number) => {
+    const proximos = abastecimentos.filter(a => a.latitude && a.longitude && haversineKm(lat, lon, a.latitude!, a.longitude!) <= 0.5);
+    const count = proximos.length;
+    if (count === 0) return null;
+    const totalLitros = proximos.reduce((s, a) => s + a.litros, 0);
+    const totalGasto = proximos.reduce((s, a) => s + a.valorPago, 0);
+    const precoMedio = totalLitros > 0 ? totalGasto / totalLitros : 0;
+    const dataMaisRecente = proximos.map(p => p.data).sort().slice(-1)[0];
+    return {
+      quantidade: count,
+      dataMaisRecente,
+      totalLitros,
+      precoMedio,
+      totalGasto,
+    } as const;
+  };
+
+  // Hooks below must be defined before any conditional returns
+  const abastecimentosComLocalizacao = useMemo(
+    () => abastecimentos.filter((ab) => ab.latitude && ab.longitude),
+    [abastecimentos]
+  );
+
+  // Exibe automaticamente o bottom sheet uma única vez com o ponto mais próximo
+  useEffect(() => {
+    if (loading || locating || previewShown) return;
+    if (abastecimentosComLocalizacao.length === 0) return;
+    // Escolhe o ponto mais próximo da posição do usuário (se existir) ou o primeiro
+    const baseLat = userLocation?.latitude ?? abastecimentosComLocalizacao[0].latitude!;
+    const baseLon = userLocation?.longitude ?? abastecimentosComLocalizacao[0].longitude!;
+    let best = abastecimentosComLocalizacao[0];
+    let bestDist = haversineKm(baseLat, baseLon, best.latitude!, best.longitude!);
+    for (const ab of abastecimentosComLocalizacao) {
+      const d = haversineKm(baseLat, baseLon, ab.latitude!, ab.longitude!);
+      if (d < bestDist) { best = ab; bestDist = d; }
+    }
+    const resumo = getResumo500m(best.latitude!, best.longitude!);
+    setSelected({ lat: best.latitude!, lon: best.longitude!, title: `Abastecimento ${best.data}`, resumo: resumo ?? undefined });
+    setPreviewShown(true);
+  }, [loading, locating, previewShown, abastecimentosComLocalizacao, userLocation]);
+
+  const markers = useMemo(() => (
+    abastecimentosComLocalizacao.map((abastecimento) => (
+      <Marker
+        key={abastecimento.id ?? `${abastecimento.carroId}-${abastecimento.data}`}
+        coordinate={{ latitude: abastecimento.latitude!, longitude: abastecimento.longitude! }}
+        title={`Abastecimento em ${abastecimento.data}`}
+        description={`Litros: ${abastecimento.litros}, Valor: R$ ${abastecimento.valorPago.toFixed(2)}`}
+        onPress={() => setSelected({ lat: abastecimento.latitude!, lon: abastecimento.longitude!, title: `Abastecimento ${abastecimento.data}` })}
+      >
+        <View style={styles.pumpMarker}>
+          <MaterialIcons name="local-gas-station" size={24} color="#FF5722" />
+        </View>
+      </Marker>
+    ))
+  ), [abastecimentosComLocalizacao]);
+
   if (loading || locating) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -93,13 +205,9 @@ export default function AbastecimentoMapaScreen() {
     );
   }
 
-  const abastecimentosComLocalizacao = abastecimentos.filter(ab => ab.latitude && ab.longitude);
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText style={styles.title}>Mapa de Abastecimentos</ThemedText>
-      </View>
       {abastecimentosComLocalizacao.length === 0 ? (
         <View style={styles.emptyContainer}>
           <ThemedText style={styles.emptyText}>Nenhum abastecimento com localização registrada.</ThemedText>
@@ -107,22 +215,20 @@ export default function AbastecimentoMapaScreen() {
           {locationError ? <ThemedText style={styles.errorText}>{locationError}</ThemedText> : null}
         </View>
       ) : (
+        <>
         <MapView
           style={styles.map}
           initialRegion={initialRegion}
+          ref={mapRef}
         >
           {/* Tiles via MapTiler (conforme política de uso). Configure EXPO_PUBLIC_MAPTILER_KEY no .env */}
-          <UrlTile
-            urlTemplate={`https://api.maptiler.com/maps/openstreetmap/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`}
-            maximumZ={19}
-            flipY={false}
-            zIndex={-1}
-          />
-          {/* Banner se a chave não estiver definida */}
-          {!MAPTILER_KEY ? (
-            <View style={styles.banner} pointerEvents="none">
-              <ThemedText style={styles.bannerText}>Defina EXPO_PUBLIC_MAPTILER_KEY para exibir os tiles OSM (MapTiler)</ThemedText>
-            </View>
+          {MAPTILER_KEY ? (
+            <UrlTile
+              urlTemplate={tileUrl}
+              maximumZ={19}
+              flipY={false}
+              zIndex={-1}
+            />
           ) : null}
           {/* Posição atual do usuário */}
           {userLocation && (
@@ -132,26 +238,122 @@ export default function AbastecimentoMapaScreen() {
               </View>
             </Marker>
           )}
-          {abastecimentosComLocalizacao.map((abastecimento, index) => (
-            <Marker
-              key={index}
-              coordinate={{
-                latitude: abastecimento.latitude!,
-                longitude: abastecimento.longitude!,
-              }}
-              title={`Abastecimento em ${abastecimento.data}`}
-              description={`Litros: ${abastecimento.litros}, Valor: R$ ${abastecimento.valorPago.toFixed(2)}`}
-            >
-              <View style={styles.pumpMarker}>
-                <MaterialIcons name="local-gas-station" size={24} color="#FF5722" />
-              </View>
-            </Marker>
-          ))}
-          {/* Atribuição (requerido) */}
-          <View style={styles.attribution} pointerEvents="none">
-            <ThemedText style={styles.attributionText}>© OpenStreetMap contributors | Tiles © MapTiler</ThemedText>
-          </View>
+          {abastecimentosComLocalizacao.map((abastecimento) => {
+            const lat = abastecimento.latitude!;
+            const lon = abastecimento.longitude!;
+            const resumo = getResumo500m(lat, lon);
+            return (
+              <Marker
+                key={abastecimento.id ?? `${abastecimento.carroId}-${abastecimento.data}`}
+                coordinate={{ latitude: lat, longitude: lon }}
+                title={`Abastecimento em ${abastecimento.data}`}
+                description={`Litros: ${abastecimento.litros}, Valor: R$ ${abastecimento.valorPago.toFixed(2)}`}
+                onPress={() => setSelected({ lat, lon, title: `Abastecimento ${abastecimento.data}` , resumo: resumo ?? undefined })}
+              >
+                <View style={styles.pumpMarker}>
+                  <MaterialIcons name="local-gas-station" size={24} color="#FF5722" />
+                </View>
+                {Platform.OS !== 'android' && (
+                <Callout tooltip={false}>
+                  <View style={styles.calloutCard}>
+                    <Text style={styles.calloutTitle}>Abastecimentos (500m): {resumo?.quantidade ?? 1}</Text>
+                    <Text style={styles.calloutLine}>Data (mais recente): {resumo?.dataMaisRecente ?? abastecimento.data}</Text>
+                    <Text style={styles.calloutLine}>Litros: {(resumo?.totalLitros ?? abastecimento.litros).toFixed(2)} L</Text>
+                    <Text style={styles.calloutLine}>Valor do litro: R$ {(resumo?.precoMedio ?? abastecimento.precoPorLitro).toFixed(2)}</Text>
+                    <Text style={styles.calloutLine}>Total gasto: R$ {(resumo?.totalGasto ?? abastecimento.valorPago).toFixed(2)}</Text>
+                    <View style={styles.calloutActions}>
+                      <Pressable style={[styles.actionBtn, styles.googleBtn]} onPress={async () => {
+                        const url = Platform.select({
+                          ios: `comgooglemaps://?daddr=${lat},${lon}&directionsmode=driving`,
+                          android: `google.navigation:q=${lat},${lon}`,
+                          default: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`,
+                        });
+                        const webFallback = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+                        if (!url) return Linking.openURL(webFallback);
+                        const can = await Linking.canOpenURL(url);
+                        return Linking.openURL(can ? url : webFallback);
+                      }}>
+                        <MaterialIcons name="map" size={16} color="#FFFFFF" />
+                        <Text style={styles.actionBtnText}>Google Maps</Text>
+                      </Pressable>
+                      <Pressable style={[styles.actionBtn, styles.wazeBtn]} onPress={async () => {
+                        const url = `waze://?ll=${lat},${lon}&navigate=yes`;
+                        const webFallback = `https://waze.com/ul?ll=${lat},${lon}&navigate=yes`;
+                        const can = await Linking.canOpenURL(url);
+                        return Linking.openURL(can ? url : webFallback);
+                      }}>
+                        <MaterialIcons name="directions" size={16} color="#FFFFFF" />
+                        <Text style={styles.actionBtnText}>Waze</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </Callout>
+                )}
+              </Marker>
+            );
+          })}
         </MapView>
+        {/* Banner se a chave não estiver definida */}
+        {!MAPTILER_KEY ? (
+          <View style={styles.banner} pointerEvents="none">
+            <ThemedText style={styles.bannerText}>Defina EXPO_PUBLIC_MAPTILER_KEY para exibir os tiles OSM (MapTiler)</ThemedText>
+          </View>
+        ) : null}
+        {/* Atribuição (requerido) */}
+        <View style={styles.attribution} pointerEvents="none">
+          <ThemedText style={styles.attributionText}>© OpenStreetMap contributors | Tiles © MapTiler</ThemedText>
+        </View>
+
+        {/* Bottom sheet de detalhes (Android e também funciona no iOS) */}
+        {selected && (
+          <View style={styles.bottomSheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Abastecimentos (500m): {selected.resumo?.quantidade ?? 1}</Text>
+            <Text style={styles.sheetLine}>Data (mais recente): {selected.resumo?.dataMaisRecente ?? selected.title?.replace('Abastecimento ', '')}</Text>
+            <Text style={styles.sheetLine}>Litros: {(selected.resumo?.totalLitros ?? 0).toFixed(2)} L</Text>
+            <Text style={styles.sheetLine}>Valor do litro: R$ {(selected.resumo?.precoMedio ?? 0).toFixed(2)}</Text>
+            <Text style={styles.sheetLine}>Total gasto: R$ {(selected.resumo?.totalGasto ?? 0).toFixed(2)}</Text>
+            <View style={styles.sheetActions}>
+              <Pressable style={[styles.actionBtn, styles.googleBtn]} onPress={async () => {
+                const url = Platform.select({
+                  ios: `comgooglemaps://?daddr=${selected.lat},${selected.lon}&directionsmode=driving`,
+                  android: `google.navigation:q=${selected.lat},${selected.lon}`,
+                  default: `https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lon}`,
+                });
+                const webFallback = `https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lon}`;
+                if (!url) return Linking.openURL(webFallback);
+                const can = await Linking.canOpenURL(url);
+                return Linking.openURL(can ? url : webFallback);
+              }}>
+                <MaterialIcons name="map" size={18} color="#FFFFFF" />
+                <Text style={styles.actionBtnText}>Google Maps</Text>
+              </Pressable>
+              <Pressable style={[styles.actionBtn, styles.wazeBtn]} onPress={async () => {
+                const url = `waze://?ll=${selected.lat},${selected.lon}&navigate=yes`;
+                const webFallback = `https://waze.com/ul?ll=${selected.lat},${selected.lon}&navigate=yes`;
+                const can = await Linking.canOpenURL(url);
+                return Linking.openURL(can ? url : webFallback);
+              }}>
+                <MaterialIcons name="directions" size={18} color="#FFFFFF" />
+                <Text style={styles.actionBtnText}>Waze</Text>
+              </Pressable>
+              <Pressable style={styles.sheetClose} onPress={() => setSelected(null)}>
+                <MaterialIcons name="close" size={18} color="#555" />
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        {/* FABs */}
+        <View style={styles.fabContainer}>
+          <Pressable style={styles.fab} onPress={goToUser} android_ripple={{ color: '#E3F2FD' }}>
+            <MaterialIcons name="my-location" size={22} color="#1976D2" />
+          </Pressable>
+          <Pressable style={[styles.fab, styles.fabSecondary]} onPress={cycleStyle} android_ripple={{ color: '#F3E5F5' }}>
+            <MaterialIcons name="layers" size={22} color="#6A1B9A" />
+          </Pressable>
+        </View>
+        </>
       )}
     </ThemedView>
   );
@@ -261,5 +463,183 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
     textAlign: 'center',
     marginBottom: 10,
+  },
+  overlayHeader: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  overlayTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: Colors.light.text,
+  },
+  overlaySubtitle: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  fabContainer: {
+    position: 'absolute',
+    right: 12,
+    bottom: 24,
+    gap: 12,
+    alignItems: 'flex-end',
+  },
+  fab: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  fabSecondary: {
+    backgroundColor: '#FFFFFF',
+  },
+  actionBar: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  actionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.light.text,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  googleBtn: {
+    backgroundColor: '#1A73E8',
+  },
+  wazeBtn: {
+    backgroundColor: '#4CAF50',
+  },
+  actionBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F2F4F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calloutCard: {
+    minWidth: 260,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  calloutCardAndroid: {
+    minWidth: 260,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 10,
+    // Sem sombras/elevation para evitar glitches no Android
+  },
+  calloutTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  calloutLine: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  calloutActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  bottomSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 48,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E0E0E0',
+    marginBottom: 10,
+  },
+  sheetTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  sheetLine: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  sheetActions: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sheetClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F2F4F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 'auto',
   },
 });
