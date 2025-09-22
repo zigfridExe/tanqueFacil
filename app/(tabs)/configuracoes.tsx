@@ -25,6 +25,8 @@ export default function ConfiguracoesScreen() {
     toggleNotifications,
     toggleDarkMode,
     toggleAutomaticBackup,
+    clusterRadiusMeters,
+    setClusterRadiusMeters,
   } = useSettingsStore();
 
   const handleResetData = () => {
@@ -57,6 +59,29 @@ export default function ConfiguracoesScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <ThemedText style={styles.title}>Configurações do Aplicativo</ThemedText>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Mapa — Raio de Agrupamento</ThemedText>
+          <ThemedText style={styles.label}>Considere abastecimentos no mesmo local dentro de um raio (em metros).</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#ECEFF1', flex: 1, marginRight: 10 }]}
+              onPress={() => setClusterRadiusMeters(clusterRadiusMeters - 50)}
+            >
+              <ThemedText style={[styles.buttonText, { color: '#263238' }]}>- 50m</ThemedText>
+            </TouchableOpacity>
+            <View style={{ paddingHorizontal: 12 }}>
+              <ThemedText style={[styles.sectionTitle, { marginBottom: 0 }]}> {clusterRadiusMeters} m</ThemedText>
+            </View>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#ECEFF1', flex: 1, marginLeft: 10 }]}
+              onPress={() => setClusterRadiusMeters(clusterRadiusMeters + 50)}
+            >
+              <ThemedText style={[styles.buttonText, { color: '#263238' }]}>+ 50m</ThemedText>
+            </TouchableOpacity>
+          </View>
+          <ThemedText style={[styles.label, { marginTop: 8, opacity: 0.7 }]}>Mín: 50m • Máx: 5000m</ThemedText>
         </View>
 
         <View style={styles.section}>

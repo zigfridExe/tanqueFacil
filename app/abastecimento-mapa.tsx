@@ -8,6 +8,7 @@ import MapView, { Marker, UrlTile, Region, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import { useSettingsStore } from '@/src/store/useSettingsStore';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -23,19 +24,9 @@ export default function AbastecimentoMapaScreen() {
   const mapRef = useRef<MapView>(null);
   const [styleId, setStyleId] = useState<'osm' | 'streets' | 'dark'>('osm');
   const navigation = useNavigation();
+  const { clusterRadiusMeters } = useSettingsStore();
   // Opcional: manter estado selecionado se precisar, mas o resumo agora vai no Callout
-  const [selected, setSelected] = useState<{
-    lat: number;
-    lon: number;
-    title?: string;
-    resumo?: {
-      quantidade: number;
-      dataMaisRecente: string | undefined;
-      totalLitros: number;
-      precoMedio: number;
-      totalGasto: number;
-    };
-  } | null>(null);
+  const [selected, setSelected] = useState<{ lat: number; lon: number; title?: string } | null>(null);
   const [previewShown, setPreviewShown] = useState(false);
 
   // Define o título apenas na AppBar
@@ -129,9 +120,10 @@ export default function AbastecimentoMapaScreen() {
     return R * c;
   };
 
-  // Calcula resumo para um ponto base considerando raio de 500m
-  const getResumo500m = (lat: number, lon: number) => {
-    const proximos = abastecimentos.filter(a => a.latitude && a.longitude && haversineKm(lat, lon, a.latitude!, a.longitude!) <= 0.5);
+  // Calcula resumo para um ponto base considerando raio configurável (em metros)
+  const getResumo = (lat: number, lon: number, radiusMeters: number) => {
+    const raioKm = Math.max(50, Math.min(5000, Math.round(radiusMeters))) / 1000; // bound e converte para km
+    const proximos = abastecimentos.filter(a => a.latitude && a.longitude && haversineKm(lat, lon, a.latitude!, a.longitude!) <= raioKm);
     const count = proximos.length;
     if (count === 0) return null;
     const totalLitros = proximos.reduce((s, a) => s + a.litros, 0);
@@ -166,10 +158,15 @@ export default function AbastecimentoMapaScreen() {
       const d = haversineKm(baseLat, baseLon, ab.latitude!, ab.longitude!);
       if (d < bestDist) { best = ab; bestDist = d; }
     }
-    const resumo = getResumo500m(best.latitude!, best.longitude!);
-    setSelected({ lat: best.latitude!, lon: best.longitude!, title: `Abastecimento ${best.data}`, resumo: resumo ?? undefined });
+    setSelected({ lat: best.latitude!, lon: best.longitude!, title: `Abastecimento ${best.data}` });
     setPreviewShown(true);
   }, [loading, locating, previewShown, abastecimentosComLocalizacao, userLocation]);
+
+  // Resumo derivado da seleção atual (recalcula ao mudar seleção ou dados)
+  const selectedResumo = useMemo(() => {
+    if (!selected) return null;
+    return getResumo(selected.lat, selected.lon, clusterRadiusMeters);
+  }, [selected, abastecimentos, clusterRadiusMeters]);
 
   const markers = useMemo(() => (
     abastecimentosComLocalizacao.map((abastecimento) => (
@@ -241,14 +238,14 @@ export default function AbastecimentoMapaScreen() {
           {abastecimentosComLocalizacao.map((abastecimento) => {
             const lat = abastecimento.latitude!;
             const lon = abastecimento.longitude!;
-            const resumo = getResumo500m(lat, lon);
+            const resumo = getResumo(lat, lon, clusterRadiusMeters);
             return (
               <Marker
                 key={abastecimento.id ?? `${abastecimento.carroId}-${abastecimento.data}`}
                 coordinate={{ latitude: lat, longitude: lon }}
                 title={`Abastecimento em ${abastecimento.data}`}
                 description={`Litros: ${abastecimento.litros}, Valor: R$ ${abastecimento.valorPago.toFixed(2)}`}
-                onPress={() => setSelected({ lat, lon, title: `Abastecimento ${abastecimento.data}` , resumo: resumo ?? undefined })}
+                onPress={() => setSelected({ lat, lon, title: `Abastecimento ${abastecimento.data}` })}
               >
                 <View style={styles.pumpMarker}>
                   <MaterialIcons name="local-gas-station" size={24} color="#FF5722" />
@@ -256,7 +253,7 @@ export default function AbastecimentoMapaScreen() {
                 {Platform.OS !== 'android' && (
                 <Callout tooltip={false}>
                   <View style={styles.calloutCard}>
-                    <Text style={styles.calloutTitle}>Abastecimentos (500m): {resumo?.quantidade ?? 1}</Text>
+                    <Text style={styles.calloutTitle}>Abastecimentos ({clusterRadiusMeters}m): {resumo?.quantidade ?? 1}</Text>
                     <Text style={styles.calloutLine}>Data (mais recente): {resumo?.dataMaisRecente ?? abastecimento.data}</Text>
                     <Text style={styles.calloutLine}>Litros: {(resumo?.totalLitros ?? abastecimento.litros).toFixed(2)} L</Text>
                     <Text style={styles.calloutLine}>Valor do litro: R$ {(resumo?.precoMedio ?? abastecimento.precoPorLitro).toFixed(2)}</Text>
@@ -308,11 +305,11 @@ export default function AbastecimentoMapaScreen() {
         {selected && (
           <View style={styles.bottomSheet}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Abastecimentos (500m): {selected.resumo?.quantidade ?? 1}</Text>
-            <Text style={styles.sheetLine}>Data (mais recente): {selected.resumo?.dataMaisRecente ?? selected.title?.replace('Abastecimento ', '')}</Text>
-            <Text style={styles.sheetLine}>Litros: {(selected.resumo?.totalLitros ?? 0).toFixed(2)} L</Text>
-            <Text style={styles.sheetLine}>Valor do litro: R$ {(selected.resumo?.precoMedio ?? 0).toFixed(2)}</Text>
-            <Text style={styles.sheetLine}>Total gasto: R$ {(selected.resumo?.totalGasto ?? 0).toFixed(2)}</Text>
+            <Text style={styles.sheetTitle}>Abastecimentos ({clusterRadiusMeters}m): {selectedResumo?.quantidade ?? 1}</Text>
+            <Text style={styles.sheetLine}>Data (mais recente): {selectedResumo?.dataMaisRecente ?? selected.title?.replace('Abastecimento ', '')}</Text>
+            <Text style={styles.sheetLine}>Litros: {(selectedResumo?.totalLitros ?? 0).toFixed(2)} L</Text>
+            <Text style={styles.sheetLine}>Valor do litro: R$ {(selectedResumo?.precoMedio ?? 0).toFixed(2)}</Text>
+            <Text style={styles.sheetLine}>Total gasto: R$ {(selectedResumo?.totalGasto ?? 0).toFixed(2)}</Text>
             <View style={styles.sheetActions}>
               <Pressable style={[styles.actionBtn, styles.googleBtn]} onPress={async () => {
                 const url = Platform.select({
