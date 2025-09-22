@@ -1,12 +1,12 @@
-import React from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
+import ConsumptionTrendReport from '@/components/reports/ConsumptionTrendReport';
+import CostsReport from '@/components/reports/CostsReport';
+import PerformanceReport from '@/components/reports/PerformanceReport';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { Link } from 'expo-router';
-import CostsReport from '@/components/reports/CostsReport';
-import PerformanceReport from '@/components/reports/PerformanceReport';
-import ConsumptionTrendReport from '@/components/reports/ConsumptionTrendReport';
+import React from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function RelatoriosScreen() {
   // Nesta primeira etapa, usamos componentes com dados mockados

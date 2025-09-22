@@ -3,5 +3,10 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.tsserver.excludeDirectories": [
+    "**/node_modules/**"
+  ],
+  "typescript.disableAutomaticTypeAcquisition": true
 }
