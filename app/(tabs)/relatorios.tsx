@@ -5,21 +5,37 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { Link } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function RelatoriosScreen() {
+  const [scope, setScope] = useState<'all' | 'active'>('all');
   // Nesta primeira etapa, usamos componentes com dados mockados
 
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>Relatórios</ThemedText>
-        <Link href="/abastecimento-mapa" asChild>
-            <TouchableOpacity style={styles.mapButton}>
-                <ThemedText style={styles.mapButtonText}>Ver Mapa</ThemedText>
-            </TouchableOpacity>
+        <Link href={{ pathname: '/abastecimento-mapa', params: { scope } }} asChild>
+          <TouchableOpacity style={styles.mapButton}>
+            <ThemedText style={styles.mapButtonText}>Ver Mapa</ThemedText>
+          </TouchableOpacity>
         </Link>
+      </View>
+
+      <View style={styles.scopeRow}>
+        <TouchableOpacity
+          style={[styles.scopeBtn, scope === 'all' && styles.scopeBtnActive]}
+          onPress={() => setScope('all')}
+        >
+          <ThemedText style={[styles.scopeBtnText, scope === 'all' && styles.scopeBtnTextActive]}>Todos os veículos</ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.scopeBtn, scope === 'active' && styles.scopeBtnActive]}
+          onPress={() => setScope('active')}
+        >
+          <ThemedText style={[styles.scopeBtnText, scope === 'active' && styles.scopeBtnTextActive]}>Veículo ativo</ThemedText>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.listContainer} showsVerticalScrollIndicator={false}>
@@ -60,5 +76,31 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 20,
+  },
+  scopeRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  scopeBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 20,
+    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+  },
+  scopeBtnActive: {
+    backgroundColor: Colors.light.tint,
+    borderColor: Colors.light.tint,
+  },
+  scopeBtnText: {
+    color: Colors.light.text,
+    fontWeight: '600',
+  },
+  scopeBtnTextActive: {
+    color: '#FFF',
   },
 });

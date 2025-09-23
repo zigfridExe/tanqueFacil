@@ -8,7 +8,9 @@ import MapView, { Marker, UrlTile, Region, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import { useLocalSearchParams } from 'expo-router';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { useVehicleStore } from '@/src/store/useVehicleStore';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -16,7 +18,7 @@ const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 export default function AbastecimentoMapaScreen() {
-  const { abastecimentos, loading, error, carregarTodosAbastecimentos } = useAbastecimentos();
+  const { abastecimentos, loading, error, carregarTodosAbastecimentos, carregarAbastecimentosPorVeiculo } = useAbastecimentos();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locating, setLocating] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -25,19 +27,23 @@ export default function AbastecimentoMapaScreen() {
   const [styleId, setStyleId] = useState<'osm' | 'streets' | 'dark'>('osm');
   const navigation = useNavigation();
   const { clusterRadiusMeters } = useSettingsStore();
-  // Opcional: manter estado selecionado se precisar, mas o resumo agora vai no Callout
+  const { selectedVehicle } = useVehicleStore();
+  const params = useLocalSearchParams<{ scope?: string }>();
+  const scope: 'all' | 'active' = params?.scope === 'active' ? 'active' : 'all';
   const [selected, setSelected] = useState<{ lat: number; lon: number; title?: string } | null>(null);
   const [previewShown, setPreviewShown] = useState(false);
 
-  // Define o título apenas na AppBar
   useLayoutEffect(() => {
     navigation.setOptions?.({ title: 'Mapa de Abastecimentos' });
   }, [navigation]);
 
   useEffect(() => {
-    // Carregar abastecimentos do banco
-    carregarTodosAbastecimentos();
-  }, [carregarTodosAbastecimentos]);
+    if (scope === 'active' && selectedVehicle?.id) {
+      carregarAbastecimentosPorVeiculo(selectedVehicle.id);
+    } else {
+      carregarTodosAbastecimentos();
+    }
+  }, [scope, selectedVehicle?.id, carregarAbastecimentosPorVeiculo, carregarTodosAbastecimentos]);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +86,6 @@ export default function AbastecimentoMapaScreen() {
         longitudeDelta: LONGITUDE_DELTA,
       };
     }
-    // Fallback: São Paulo
     return {
       latitude: -23.55052,
       longitude: -46.633309,
@@ -107,7 +112,6 @@ export default function AbastecimentoMapaScreen() {
     return `${base}/${variant}/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`;
   }, [MAPTILER_KEY, styleId]);
 
-  // Distância Haversine em km
   const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -120,9 +124,8 @@ export default function AbastecimentoMapaScreen() {
     return R * c;
   };
 
-  // Calcula resumo para um ponto base considerando raio configurável (em metros)
   const getResumo = (lat: number, lon: number, radiusMeters: number) => {
-    const raioKm = Math.max(50, Math.min(5000, Math.round(radiusMeters))) / 1000; // bound e converte para km
+    const raioKm = Math.max(50, Math.min(5000, Math.round(radiusMeters))) / 1000;
     const proximos = abastecimentos.filter(a => a.latitude && a.longitude && haversineKm(lat, lon, a.latitude!, a.longitude!) <= raioKm);
     const count = proximos.length;
     if (count === 0) return null;
@@ -130,26 +133,17 @@ export default function AbastecimentoMapaScreen() {
     const totalGasto = proximos.reduce((s, a) => s + a.valorPago, 0);
     const precoMedio = totalLitros > 0 ? totalGasto / totalLitros : 0;
     const dataMaisRecente = proximos.map(p => p.data).sort().slice(-1)[0];
-    return {
-      quantidade: count,
-      dataMaisRecente,
-      totalLitros,
-      precoMedio,
-      totalGasto,
-    } as const;
+    return { quantidade: count, dataMaisRecente, totalLitros, precoMedio, totalGasto } as const;
   };
 
-  // Hooks below must be defined before any conditional returns
   const abastecimentosComLocalizacao = useMemo(
     () => abastecimentos.filter((ab) => ab.latitude && ab.longitude),
     [abastecimentos]
   );
 
-  // Exibe automaticamente o bottom sheet uma única vez com o ponto mais próximo
   useEffect(() => {
     if (loading || locating || previewShown) return;
     if (abastecimentosComLocalizacao.length === 0) return;
-    // Escolhe o ponto mais próximo da posição do usuário (se existir) ou o primeiro
     const baseLat = userLocation?.latitude ?? abastecimentosComLocalizacao[0].latitude!;
     const baseLon = userLocation?.longitude ?? abastecimentosComLocalizacao[0].longitude!;
     let best = abastecimentosComLocalizacao[0];
@@ -162,7 +156,6 @@ export default function AbastecimentoMapaScreen() {
     setPreviewShown(true);
   }, [loading, locating, previewShown, abastecimentosComLocalizacao, userLocation]);
 
-  // Resumo derivado da seleção atual (recalcula ao mudar seleção ou dados)
   const selectedResumo = useMemo(() => {
     if (!selected) return null;
     return getResumo(selected.lat, selected.lon, clusterRadiusMeters);
@@ -197,14 +190,17 @@ export default function AbastecimentoMapaScreen() {
     return (
       <ThemedView style={styles.errorContainer}>
         <ThemedText style={styles.errorText}>Erro ao carregar abastecimentos: {error}</ThemedText>
-        {/* Add a retry button if needed */}
       </ThemedView>
     );
   }
 
-
   return (
     <ThemedView style={styles.container}>
+      {scope === 'active' && !selectedVehicle?.id ? (
+        <View style={styles.banner} pointerEvents="none">
+          <ThemedText style={styles.bannerText}>Selecione um veículo ativo para filtrar o mapa. Exibindo todos.</ThemedText>
+        </View>
+      ) : null}
       {abastecimentosComLocalizacao.length === 0 ? (
         <View style={styles.emptyContainer}>
           <ThemedText style={styles.emptyText}>Nenhum abastecimento com localização registrada.</ThemedText>
@@ -213,143 +209,84 @@ export default function AbastecimentoMapaScreen() {
         </View>
       ) : (
         <>
-        <MapView
-          style={styles.map}
-          initialRegion={initialRegion}
-          ref={mapRef}
-        >
-          {/* Tiles via MapTiler (conforme política de uso). Configure EXPO_PUBLIC_MAPTILER_KEY no .env */}
-          {MAPTILER_KEY ? (
-            <UrlTile
-              urlTemplate={tileUrl}
-              maximumZ={19}
-              flipY={false}
-              zIndex={-1}
-            />
-          ) : null}
-          {/* Posição atual do usuário */}
-          {userLocation && (
-            <Marker coordinate={userLocation} title="Você está aqui">
-              <View style={styles.userDotOuter}>
-                <View style={styles.userDotInner} />
-              </View>
-            </Marker>
-          )}
-          {abastecimentosComLocalizacao.map((abastecimento) => {
-            const lat = abastecimento.latitude!;
-            const lon = abastecimento.longitude!;
-            const resumo = getResumo(lat, lon, clusterRadiusMeters);
-            return (
-              <Marker
-                key={abastecimento.id ?? `${abastecimento.carroId}-${abastecimento.data}`}
-                coordinate={{ latitude: lat, longitude: lon }}
-                title={`Abastecimento em ${abastecimento.data}`}
-                description={`Litros: ${abastecimento.litros}, Valor: R$ ${abastecimento.valorPago.toFixed(2)}`}
-                onPress={() => setSelected({ lat, lon, title: `Abastecimento ${abastecimento.data}` })}
-              >
-                <View style={styles.pumpMarker}>
-                  <MaterialIcons name="local-gas-station" size={24} color="#FF5722" />
+          <MapView
+            style={styles.map}
+            initialRegion={initialRegion}
+            ref={mapRef}
+          >
+            {MAPTILER_KEY ? (
+              <UrlTile
+                urlTemplate={tileUrl}
+                maximumZ={19}
+                flipY={false}
+                zIndex={-1}
+              />
+            ) : null}
+            {userLocation && (
+              <Marker coordinate={userLocation} title="Você está aqui">
+                <View style={styles.userDotOuter}>
+                  <View style={styles.userDotInner} />
                 </View>
-                {Platform.OS !== 'android' && (
-                <Callout tooltip={false}>
-                  <View style={styles.calloutCard}>
-                    <Text style={styles.calloutTitle}>Abastecimentos ({clusterRadiusMeters}m): {resumo?.quantidade ?? 1}</Text>
-                    <Text style={styles.calloutLine}>Data (mais recente): {resumo?.dataMaisRecente ?? abastecimento.data}</Text>
-                    <Text style={styles.calloutLine}>Litros: {(resumo?.totalLitros ?? abastecimento.litros).toFixed(2)} L</Text>
-                    <Text style={styles.calloutLine}>Valor do litro: R$ {(resumo?.precoMedio ?? abastecimento.precoPorLitro).toFixed(2)}</Text>
-                    <Text style={styles.calloutLine}>Total gasto: R$ {(resumo?.totalGasto ?? abastecimento.valorPago).toFixed(2)}</Text>
-                    <View style={styles.calloutActions}>
-                      <Pressable style={[styles.actionBtn, styles.googleBtn]} onPress={async () => {
-                        const url = Platform.select({
-                          ios: `comgooglemaps://?daddr=${lat},${lon}&directionsmode=driving`,
-                          android: `google.navigation:q=${lat},${lon}`,
-                          default: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`,
-                        });
-                        const webFallback = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-                        if (!url) return Linking.openURL(webFallback);
-                        const can = await Linking.canOpenURL(url);
-                        return Linking.openURL(can ? url : webFallback);
-                      }}>
-                        <MaterialIcons name="map" size={16} color="#FFFFFF" />
-                        <Text style={styles.actionBtnText}>Google Maps</Text>
-                      </Pressable>
-                      <Pressable style={[styles.actionBtn, styles.wazeBtn]} onPress={async () => {
-                        const url = `waze://?ll=${lat},${lon}&navigate=yes`;
-                        const webFallback = `https://waze.com/ul?ll=${lat},${lon}&navigate=yes`;
-                        const can = await Linking.canOpenURL(url);
-                        return Linking.openURL(can ? url : webFallback);
-                      }}>
-                        <MaterialIcons name="directions" size={16} color="#FFFFFF" />
-                        <Text style={styles.actionBtnText}>Waze</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                </Callout>
-                )}
               </Marker>
-            );
-          })}
-        </MapView>
-        {/* Banner se a chave não estiver definida */}
-        {!MAPTILER_KEY ? (
-          <View style={styles.banner} pointerEvents="none">
-            <ThemedText style={styles.bannerText}>Defina EXPO_PUBLIC_MAPTILER_KEY para exibir os tiles OSM (MapTiler)</ThemedText>
-          </View>
-        ) : null}
-        {/* Atribuição (requerido) */}
-        <View style={styles.attribution} pointerEvents="none">
-          <ThemedText style={styles.attributionText}>© OpenStreetMap contributors | Tiles © MapTiler</ThemedText>
-        </View>
-
-        {/* Bottom sheet de detalhes (Android e também funciona no iOS) */}
-        {selected && (
-          <View style={styles.bottomSheet}>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Abastecimentos ({clusterRadiusMeters}m): {selectedResumo?.quantidade ?? 1}</Text>
-            <Text style={styles.sheetLine}>Data (mais recente): {selectedResumo?.dataMaisRecente ?? selected.title?.replace('Abastecimento ', '')}</Text>
-            <Text style={styles.sheetLine}>Litros: {(selectedResumo?.totalLitros ?? 0).toFixed(2)} L</Text>
-            <Text style={styles.sheetLine}>Valor do litro: R$ {(selectedResumo?.precoMedio ?? 0).toFixed(2)}</Text>
-            <Text style={styles.sheetLine}>Total gasto: R$ {(selectedResumo?.totalGasto ?? 0).toFixed(2)}</Text>
-            <View style={styles.sheetActions}>
-              <Pressable style={[styles.actionBtn, styles.googleBtn]} onPress={async () => {
-                const url = Platform.select({
-                  ios: `comgooglemaps://?daddr=${selected.lat},${selected.lon}&directionsmode=driving`,
-                  android: `google.navigation:q=${selected.lat},${selected.lon}`,
-                  default: `https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lon}`,
-                });
-                const webFallback = `https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lon}`;
-                if (!url) return Linking.openURL(webFallback);
-                const can = await Linking.canOpenURL(url);
-                return Linking.openURL(can ? url : webFallback);
-              }}>
-                <MaterialIcons name="map" size={18} color="#FFFFFF" />
-                <Text style={styles.actionBtnText}>Google Maps</Text>
-              </Pressable>
-              <Pressable style={[styles.actionBtn, styles.wazeBtn]} onPress={async () => {
-                const url = `waze://?ll=${selected.lat},${selected.lon}&navigate=yes`;
-                const webFallback = `https://waze.com/ul?ll=${selected.lat},${selected.lon}&navigate=yes`;
-                const can = await Linking.canOpenURL(url);
-                return Linking.openURL(can ? url : webFallback);
-              }}>
-                <MaterialIcons name="directions" size={18} color="#FFFFFF" />
-                <Text style={styles.actionBtnText}>Waze</Text>
-              </Pressable>
-              <Pressable style={styles.sheetClose} onPress={() => setSelected(null)}>
-                <MaterialIcons name="close" size={18} color="#555" />
-              </Pressable>
+            )}
+            {markers}
+          </MapView>
+          {!MAPTILER_KEY ? (
+            <View style={styles.banner} pointerEvents="none">
+              <ThemedText style={styles.bannerText}>Defina EXPO_PUBLIC_MAPTILER_KEY para exibir os tiles OSM (MapTiler)</ThemedText>
             </View>
+          ) : null}
+          <View style={styles.attribution} pointerEvents="none">
+            <ThemedText style={styles.attributionText}> OpenStreetMap contributors | Tiles MapTiler</ThemedText>
           </View>
-        )}
 
-        {/* FABs */}
-        <View style={styles.fabContainer}>
-          <Pressable style={styles.fab} onPress={goToUser} android_ripple={{ color: '#E3F2FD' }}>
-            <MaterialIcons name="my-location" size={22} color="#1976D2" />
-          </Pressable>
-          <Pressable style={[styles.fab, styles.fabSecondary]} onPress={cycleStyle} android_ripple={{ color: '#F3E5F5' }}>
-            <MaterialIcons name="layers" size={22} color="#6A1B9A" />
-          </Pressable>
-        </View>
+          {selected && (
+            <View style={styles.bottomSheet}>
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>Abastecimentos ({clusterRadiusMeters}m): {selectedResumo?.quantidade ?? 1}</Text>
+              <Text style={styles.sheetLine}>Data (mais recente): {selectedResumo?.dataMaisRecente ?? selected.title?.replace('Abastecimento ', '')}</Text>
+              <Text style={styles.sheetLine}>Litros: {(selectedResumo?.totalLitros ?? 0).toFixed(2)} L</Text>
+              <Text style={styles.sheetLine}>Valor do litro: R$ {(selectedResumo?.precoMedio ?? 0).toFixed(2)}</Text>
+              <Text style={styles.sheetLine}>Total gasto: R$ {(selectedResumo?.totalGasto ?? 0).toFixed(2)}</Text>
+              <View style={styles.sheetActions}>
+                <Pressable style={[styles.actionBtn, styles.googleBtn]} onPress={async () => {
+                  const url = Platform.select({
+                    ios: `comgooglemaps://?daddr=${selected.lat},${selected.lon}&directionsmode=driving`,
+                    android: `google.navigation:q=${selected.lat},${selected.lon}`,
+                    default: `https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lon}`,
+                  });
+                  const webFallback = `https://www.google.com/maps/dir/?api=1&destination=${selected.lat},${selected.lon}`;
+                  if (!url) return Linking.openURL(webFallback);
+                  const can = await Linking.canOpenURL(url);
+                  return Linking.openURL(can ? url : webFallback);
+                }}>
+                  <MaterialIcons name="map" size={18} color="#FFFFFF" />
+                  <Text style={styles.actionBtnText}>Google Maps</Text>
+                </Pressable>
+                <Pressable style={[styles.actionBtn, styles.wazeBtn]} onPress={async () => {
+                  const url = `waze://?ll=${selected.lat},${selected.lon}&navigate=yes`;
+                  const webFallback = `https://waze.com/ul?ll=${selected.lat},${selected.lon}&navigate=yes`;
+                  const can = await Linking.canOpenURL(url);
+                  return Linking.openURL(can ? url : webFallback);
+                }}>
+                  <MaterialIcons name="directions" size={18} color="#FFFFFF" />
+                  <Text style={styles.actionBtnText}>Waze</Text>
+                </Pressable>
+                <Pressable style={styles.sheetClose} onPress={() => setSelected(null)}>
+                  <MaterialIcons name="close" size={18} color="#555" />
+                </Pressable>
+              </View>
+            </View>
+          )}
+
+          <View style={styles.fabContainer}>
+            <Pressable style={styles.fab} onPress={goToUser} android_ripple={{ color: '#E3F2FD' }}>
+              <MaterialIcons name="my-location" size={22} color="#1976D2" />
+            </Pressable>
+            <Pressable style={[styles.fab, styles.fabSecondary]} onPress={cycleStyle} android_ripple={{ color: '#F3E5F5' }}>
+              <MaterialIcons name="layers" size={22} color="#6A1B9A" />
+            </Pressable>
+          </View>
         </>
       )}
     </ThemedView>
