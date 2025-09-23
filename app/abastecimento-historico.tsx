@@ -23,6 +23,9 @@ const AbastecimentoCard = ({ item, onExcluir }: { item: Abastecimento, onExcluir
         Data: {new Date(item.data).toLocaleDateString('pt-BR')}
       </ThemedText>
       <ThemedText style={styles.cardDetalhes}>
+        Veículo: {item.carroNome ? item.carroNome : `#${item.carroId}`}
+      </ThemedText>
+      <ThemedText style={styles.cardDetalhes}>
         Combustível: {item.tipoCombustivel}
       </ThemedText>
       <ThemedText style={styles.cardDetalhes}>

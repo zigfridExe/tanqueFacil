@@ -51,11 +51,15 @@ export const abastecimentoService = {
   },
 
   // Buscar abastecimentos por veículo
-  async buscarAbastecimentosPorVeiculo(carroId: number): Promise<Abastecimento[]> {
+  async buscarAbastecimentosPorVeiculo(carroId: number): Promise<(Abastecimento & { carroNome?: string })[]> {
     try {
       const db = await getDb();
-      const rows = await db.getAllAsync<Abastecimento>(
-        'SELECT * FROM Abastecimentos WHERE carroId = ? ORDER BY data DESC, quilometragem DESC;',
+      const rows = await db.getAllAsync<Abastecimento & { carroNome?: string }>(
+        `SELECT a.*, c.nome as carroNome
+         FROM Abastecimentos a
+         JOIN Carro c ON c.id = a.carroId
+         WHERE a.carroId = ?
+         ORDER BY a.data DESC, a.quilometragem DESC;`,
         [carroId]
       );
       return rows;
@@ -66,11 +70,15 @@ export const abastecimentoService = {
   },
 
   // Buscar último abastecimento por veículo
-  async buscarUltimoAbastecimentoPorVeiculo(carroId: number): Promise<Abastecimento | null> {
+  async buscarUltimoAbastecimentoPorVeiculo(carroId: number): Promise<(Abastecimento & { carroNome?: string }) | null> {
     try {
       const db = await getDb();
-      const row = await db.getFirstAsync<Abastecimento>(
-        'SELECT * FROM Abastecimentos WHERE carroId = ? ORDER BY data DESC, quilometragem DESC LIMIT 1;',
+      const row = await db.getFirstAsync<Abastecimento & { carroNome?: string }>(
+        `SELECT a.*, c.nome as carroNome
+         FROM Abastecimentos a
+         JOIN Carro c ON c.id = a.carroId
+         WHERE a.carroId = ?
+         ORDER BY a.data DESC, a.quilometragem DESC LIMIT 1;`,
         [carroId]
       );
       return row || null;
@@ -81,10 +89,15 @@ export const abastecimentoService = {
   },
 
   // Buscar todos os abastecimentos
-  async buscarTodosAbastecimentos(): Promise<Abastecimento[]> {
+  async buscarTodosAbastecimentos(): Promise<(Abastecimento & { carroNome?: string })[]> {
     try {
       const db = await getDb();
-      const rows = await db.getAllAsync<Abastecimento>('SELECT * FROM Abastecimentos ORDER BY data DESC, quilometragem DESC;');
+      const rows = await db.getAllAsync<Abastecimento & { carroNome?: string }>(
+        `SELECT a.*, c.nome as carroNome
+         FROM Abastecimentos a
+         JOIN Carro c ON c.id = a.carroId
+         ORDER BY a.data DESC, a.quilometragem DESC;`
+      );
       return rows;
     } catch (error) {
       console.error('Erro ao buscar todos os abastecimentos:', error);

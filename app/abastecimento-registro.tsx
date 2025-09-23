@@ -1,7 +1,7 @@
   // Debug: logar o veiculo sempre que renderizar
   import * as Location from 'expo-location';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,7 @@ import { useAbastecimentos } from '../hooks/useAbastecimentos';
 import { useVeiculos } from '../hooks/useVeiculos';
 import { AbastecimentoForm } from '../services/abastecimentoService';
 import { veiculoService } from '../services/veiculoService';
+import { useNavigation } from '@react-navigation/native';
 
 import { formatDate, formatDateToISO, formatNumberInput, parseNumberInput } from '../src/utils/format';
 import { Veiculo } from '../types/veiculo';
@@ -31,7 +32,8 @@ export default function AbastecimentoRegistro() {
   const carroId = params.carroId ? parseInt(params.carroId as string) : 0;
   console.log('DEBUG carroId:', carroId);
   const { criarAbastecimento, loading, error, buscarUltimaQuilometragem } = useAbastecimentos();
-  const { buscarVeiculoPorId, veiculos, loading: loadingVeiculos } = useVeiculos();
+  const { buscarVeiculoPorId, veiculos, loading: loadingVeiculos, selectedVehicle } = useVeiculos();
+  const navigation = useNavigation();
 
   const [veiculo, setVeiculo] = useState<Veiculo | null>(null);
   const [ultimaQuilometragem, setUltimaQuilometragem] = useState<number | null>(null);
@@ -56,24 +58,33 @@ export default function AbastecimentoRegistro() {
   const [quilometragemExibicao, setQuilometragemExibicao] = useState('');
 
 
+  // Determina o ID efetivo do carro: parâmetro de rota tem prioridade; senão, usa o selecionado
+  const effectiveCarId = carroId || selectedVehicle?.id || 0;
+
   // Sempre recarrega o veículo ao focar na tela
   useFocusEffect(
     useCallback(() => {
-      if (carroId) {
-        setForm(prev => ({ ...prev, carroId }));
+      if (effectiveCarId) {
+        setForm(prev => ({ ...prev, carroId: effectiveCarId }));
         const fetchVeiculoEQuilometragem = async () => {
-          console.log('DEBUG buscando veículo', carroId);
-          const veiculoEncontrado = await buscarVeiculoPorId(carroId);
+          console.log('DEBUG buscando veículo', effectiveCarId);
+          const veiculoEncontrado = await buscarVeiculoPorId(effectiveCarId);
           console.log('DEBUG veiculoEncontrado:', veiculoEncontrado);
           setVeiculo(veiculoEncontrado || null);
 
-          const km = await buscarUltimaQuilometragem(carroId);
+          const km = await buscarUltimaQuilometragem(effectiveCarId);
           setUltimaQuilometragem(km);
         };
         fetchVeiculoEQuilometragem();
       }
-    }, [carroId, buscarVeiculoPorId, buscarUltimaQuilometragem])
+    }, [effectiveCarId, buscarVeiculoPorId, buscarUltimaQuilometragem])
   );
+
+  // Atualiza o título do header com o veículo ativo
+  useLayoutEffect(() => {
+    const nome = veiculo?.nome || selectedVehicle?.nome;
+    navigation.setOptions?.({ title: nome ? `Abastecer - ${nome}` : 'Registrar Abastecimento' });
+  }, [navigation, veiculo, selectedVehicle]);
 
   const handleDateChange = (text: string) => {
     const formatted = text.replace(/[^0-9]/g, '').slice(0, 8);
@@ -208,6 +219,20 @@ export default function AbastecimentoRegistro() {
         </ThemedText>
         <TouchableOpacity style={styles.button} onPress={() => router.push('/veiculo-cadastro')}>
           <ThemedText style={styles.buttonText}>Cadastrar Veículo</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
+
+  // Caso existam veículos, mas nenhum esteja ativo/selecionado e nenhum foi passado por parâmetro
+  if (!effectiveCarId) {
+    return (
+      <ThemedView style={[styles.container, styles.emptyState]}>
+        <ThemedText style={styles.emptyStateText}>
+          Selecione um veículo ativo para registrar o abastecimento.
+        </ThemedText>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/(tabs)/veiculos')}>
+          <ThemedText style={styles.buttonText}>Escolher Veículo</ThemedText>
         </TouchableOpacity>
       </ThemedView>
     );
