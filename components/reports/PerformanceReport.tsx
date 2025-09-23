@@ -288,7 +288,7 @@ function MiniBars({
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
   },
   sectionTitle: {
     fontSize: 20,

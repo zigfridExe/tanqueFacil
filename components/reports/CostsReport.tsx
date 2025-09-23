@@ -233,7 +233,7 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon?:
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
   },
   sectionTitle: {
     fontSize: 20,

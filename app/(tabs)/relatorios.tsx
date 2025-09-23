@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingVertical: 12,
     paddingTop: 60,
   },
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   mapButton: {
     backgroundColor: Colors.light.tint,
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     borderRadius: 20,
   },
   mapButtonText: {
@@ -76,12 +76,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   listContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
   },
   scopeRow: {
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     marginBottom: 12,
   },
   scopeBtn: {
