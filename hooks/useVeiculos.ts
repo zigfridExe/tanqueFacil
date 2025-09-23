@@ -54,14 +54,15 @@ export function useVeiculos() {
           id: result.data.id,
           nome: result.data.nome,
           capacidadeTanque: result.data.capacidadeTanque,
+          quilometragem: result.data.quilometragem,
           consumoManualGasolina: result.data.consumoManualGasolina,
           consumoManualEtanol: result.data.consumoManualEtanol,
           tipoPonteiro: result.data.tipoPonteiro,
-          salvarLocalizacao: result.data.salvarLocalizacao === 1,
-          lembreteCalibragem: result.data.lembreteCalibragem === 1,
+          salvarLocalizacao: result.data.salvarLocalizacao,
+          lembreteCalibragem: result.data.lembreteCalibragem,
           frequenciaLembrete: result.data.frequenciaLembrete,
           dataUltimaCalibragem: result.data.dataUltimaCalibragem,
-          exibirNoDashboard: result.data.exibirNoDashboard === 1,
+          exibirNoDashboard: result.data.exibirNoDashboard,
         };
         addVehicle(veiculo);
         return true;
@@ -99,14 +100,15 @@ export function useVeiculos() {
           id: result.data.id,
           nome: result.data.nome,
           capacidadeTanque: result.data.capacidadeTanque,
+          quilometragem: result.data.quilometragem,
           consumoManualGasolina: result.data.consumoManualGasolina,
           consumoManualEtanol: result.data.consumoManualEtanol,
           tipoPonteiro: result.data.tipoPonteiro,
-          salvarLocalizacao: result.data.salvarLocalizacao === 1,
-          lembreteCalibragem: result.data.lembreteCalibragem === 1,
+          salvarLocalizacao: result.data.salvarLocalizacao,
+          lembreteCalibragem: result.data.lembreteCalibragem,
           frequenciaLembrete: result.data.frequenciaLembrete,
           dataUltimaCalibragem: result.data.dataUltimaCalibragem,
-          exibirNoDashboard: result.data.exibirNoDashboard === 1,
+          exibirNoDashboard: result.data.exibirNoDashboard,
         };
         updateVehicle(veiculo);
         return true;

@@ -7,6 +7,7 @@ export const veiculoService = {
     return new Promise(async (resolve) => {
       const veiculo = {
         nome: veiculoForm.nome,
+        capacidadeTanque: parseFloat(veiculoForm.capacidadeTanque),
         quilometragem: parseFloat(veiculoForm.quilometragem),
         consumoManualGasolina: null, // Default value
         consumoManualEtanol: null, // Default value

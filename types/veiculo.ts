@@ -34,4 +34,5 @@ export interface Abastecimento {
   latitude?: number;
   longitude?: number;
   carroId: number;
-} 
+  carroNome?: string; // Nome do veículo (JOIN com Carro)
+}

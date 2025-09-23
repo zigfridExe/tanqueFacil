@@ -158,16 +158,6 @@ export default function VeiculoCadastro() {
           />
         </View>
 
-        
-
-        
-
-        
-
-        
-
-        
-
         {/* Botões */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()} disabled={loading}>
