@@ -56,7 +56,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     paddingTop: 60,
   },
   title: {
@@ -75,12 +76,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   listContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   scopeRow: {
     flexDirection: 'row',
     gap: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   scopeBtn: {

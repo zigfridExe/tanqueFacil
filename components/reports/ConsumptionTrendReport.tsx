@@ -149,7 +149,7 @@ function Chip({ text, active = false, onPress }: { text: string; active?: boolea
 
 const styles = StyleSheet.create({
   section: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 20,
