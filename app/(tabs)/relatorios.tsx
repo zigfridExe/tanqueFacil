@@ -4,37 +4,43 @@ import PerformanceReport from '@/components/reports/PerformanceReport';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
-import { Link } from 'expo-router';
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function RelatoriosScreen() {
+  const router = useRouter();
   const [scope, setScope] = useState<'all' | 'active'>('all');
-  // Nesta primeira etapa, usamos componentes com dados mockados
-
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>Relatórios</ThemedText>
-        <Link href={{ pathname: '/abastecimento-mapa', params: { scope } }} asChild>
-          <TouchableOpacity style={styles.mapButton}>
-            <ThemedText style={styles.mapButtonText}>Ver Mapa</ThemedText>
+        <View style={styles.scopeRow}>
+          <TouchableOpacity
+            style={[styles.scopeBtn, scope === 'all' && styles.scopeBtnActive]}
+            onPress={() => setScope('all')}
+          >
+            <ThemedText style={[styles.scopeBtnText, scope === 'all' && styles.scopeBtnTextActive]}>
+              Todos os veículos
+            </ThemedText>
           </TouchableOpacity>
-        </Link>
-      </View>
-
-      <View style={styles.scopeRow}>
-        <TouchableOpacity
-          style={[styles.scopeBtn, scope === 'all' && styles.scopeBtnActive]}
-          onPress={() => setScope('all')}
+          <TouchableOpacity
+            style={[styles.scopeBtn, scope === 'active' && styles.scopeBtnActive]}
+            onPress={() => setScope('active')}
+          >
+            <ThemedText style={[styles.scopeBtnText, scope === 'active' && styles.scopeBtnTextActive]}>
+              Veículo ativo
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity 
+          style={styles.mapButton}
+          onPress={() => router.push({
+            pathname: '/abastecimento-mapa',
+            params: { scope }
+          })}
         >
-          <ThemedText style={[styles.scopeBtnText, scope === 'all' && styles.scopeBtnTextActive]}>Todos os veículos</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.scopeBtn, scope === 'active' && styles.scopeBtnActive]}
-          onPress={() => setScope('active')}
-        >
-          <ThemedText style={[styles.scopeBtnText, scope === 'active' && styles.scopeBtnTextActive]}>Veículo ativo</ThemedText>
+          <ThemedText style={styles.mapButtonText}>Ver Mapa</ThemedText>
         </TouchableOpacity>
       </View>
 
