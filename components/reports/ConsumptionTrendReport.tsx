@@ -59,10 +59,10 @@ export default function ConsumptionTrendReport() {
     // Ordenar por data final e pegar os últimos 8
     const orderedSeg = segments.sort((a, b) => a.endDate.localeCompare(b.endDate));
     return orderedSeg.slice(-8).map((s) => s.kml);
-  }, [abastecimentos, range]);
+  }, [abastecimentos, range, customStart, customEnd]);
 
   // Fallback mock caso não haja dados
-  const serie = realSerie ?? [9.8, 10.4, 11.2, 10.9, 11.6, 12.1, 11.7, 11.4];
+  const serie = useMemo(() => realSerie ?? [9.8, 10.4, 11.2, 10.9, 11.6, 12.1, 11.7, 11.4], [realSerie]);
   const media = useMemo(() => (serie.length ? serie.reduce((s, v) => s + v, 0) / serie.length : 0), [serie]);
   const max = Math.max(...serie, 12.5);
 

@@ -57,7 +57,6 @@ export default function AbastecimentoHistoricoScreen() {
     error, 
     excluirAbastecimento, 
     carregarTodosAbastecimentos,
-    refresh,
   } = useAbastecimentos();
 
   useFocusEffect(

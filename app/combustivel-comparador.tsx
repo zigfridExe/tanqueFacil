@@ -13,7 +13,7 @@ import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import { Colors } from '../constants/Colors';
 import { useVeiculos } from '../hooks/useVeiculos';
-import { Veiculo } from '../types/veiculo';
+
 
 export default function ComparadorCombustivelScreen() {
   const { veiculos, loading: loadingVeiculos } = useVeiculos();

@@ -2,9 +2,9 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, StyleSheet, View, Pressable, Linking, Platform, Text } from 'react-native';
-import MapView, { Marker, UrlTile, Region, Callout } from 'react-native-maps';
+import MapView, { Marker, UrlTile, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -124,7 +124,7 @@ export default function AbastecimentoMapaScreen() {
     return R * c;
   };
 
-  const getResumo = (lat: number, lon: number, radiusMeters: number) => {
+  const getResumo = useCallback((lat: number, lon: number, radiusMeters: number) => {
     const raioKm = Math.max(50, Math.min(5000, Math.round(radiusMeters))) / 1000;
     const proximos = abastecimentos.filter(a => a.latitude && a.longitude && haversineKm(lat, lon, a.latitude!, a.longitude!) <= raioKm);
     const count = proximos.length;
@@ -134,7 +134,7 @@ export default function AbastecimentoMapaScreen() {
     const precoMedio = totalLitros > 0 ? totalGasto / totalLitros : 0;
     const dataMaisRecente = proximos.map(p => p.data).sort().slice(-1)[0];
     return { quantidade: count, dataMaisRecente, totalLitros, precoMedio, totalGasto } as const;
-  };
+  }, [abastecimentos]);
 
   const abastecimentosComLocalizacao = useMemo(
     () => abastecimentos.filter((ab) => ab.latitude && ab.longitude),
@@ -159,7 +159,7 @@ export default function AbastecimentoMapaScreen() {
   const selectedResumo = useMemo(() => {
     if (!selected) return null;
     return getResumo(selected.lat, selected.lon, clusterRadiusMeters);
-  }, [selected, abastecimentos, clusterRadiusMeters]);
+  }, [selected, clusterRadiusMeters, getResumo]);
 
   const markers = useMemo(() => (
     abastecimentosComLocalizacao.map((abastecimento) => (
