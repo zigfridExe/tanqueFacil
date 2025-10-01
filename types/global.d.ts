@@ -3,6 +3,13 @@
 // Módulos de componentes
 /// <reference types="react-native" />
 
+declare module 'react-native' {
+  export * from 'react-native/types/index';
+  
+  // Adiciona uma declaração explícita para o Text
+  export const Text: React.ComponentType<React.ComponentProps<typeof import('react-native').Text>>;
+}
+
 declare module '@/components/reports/ConsumptionTrendReport' {
   import { ReactNode } from 'react';
   const Component: () => ReactNode;
@@ -22,8 +29,8 @@ declare module '@/components/reports/PerformanceReport' {
 }
 
 declare module '@/components/ThemedText' {
-  import { TextProps } from 'react-native';
   import { ReactNode } from 'react';
+  import { TextProps } from 'react-native';
   
   interface ThemedTextProps extends TextProps {
     children: ReactNode;
@@ -39,8 +46,8 @@ declare module '@/components/ThemedText' {
 }
 
 declare module '@/components/ThemedView' {
-  import { ViewProps } from 'react-native';
   import { ReactNode } from 'react';
+  import { ViewProps } from 'react-native';
   
   interface ThemedViewProps extends ViewProps {
     children: ReactNode;
@@ -126,7 +133,7 @@ declare module 'react-native' {
   // Tipos de propriedades dos componentes
   export interface ViewProps {
     children?: React.ReactNode;
-    style?: ViewStyle | ViewStyle[];
+    styles?: ViewStyle | ViewStyle[];
     // Outras props comuns do View
     [key: string]: any;
   }

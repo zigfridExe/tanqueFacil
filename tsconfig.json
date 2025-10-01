@@ -1,11 +1,10 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": ["expo/tsconfig.base", "./tsconfig.paths.json"],
   "compilerOptions": {
     "strict": false,
     "baseUrl": ".",
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "react-native",
+    "lib": ["es6", "dom", "es2017", "es2018", "es2019", "es2020", "es2021", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -17,8 +16,7 @@
       "@/*": ["./*"],
       "@src/*": ["src/*"]
     },
-    "types": ["node", "jest"],
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "types": ["node", "jest"]
   },
   "include": [
     "**/*.ts",

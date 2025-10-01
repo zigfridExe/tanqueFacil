@@ -119,7 +119,7 @@ export default function PerformanceReport() {
     } as const;
 
     return { porCombustivel, porTrajeto, calibragem } as const;
-  }, [abastecimentos, range]);
+  }, [abastecimentos, range, customStart, customEnd]);
 
   const ganhoCalibragemPct = useMemo(() => {
     const base = realStats || mock;

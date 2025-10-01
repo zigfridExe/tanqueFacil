@@ -21,7 +21,7 @@ interface CostsReportProps {
 }
 
 export default function CostsReport({ title = 'Custos', mock = true }: CostsReportProps) {
-  const { abastecimentos, carregarTodosAbastecimentos, loading } = useAbastecimentos();
+  const { abastecimentos, carregarTodosAbastecimentos } = useAbastecimentos();
   const [range, setRange] = useState<'mes' | '30d' | 'custom'>('mes');
   const [showModal, setShowModal] = useState(false);
   const [customStart, setCustomStart] = useState<Date | null>(null);
@@ -104,7 +104,7 @@ export default function CostsReport({ title = 'Custos', mock = true }: CostsRepo
     );
 
     return { gastoTotal, litrosTotal, custoMedioLitro, ticketMedio, custoPorKm, porCombustivel } as const;
-  }, [abastecimentos, dados]);
+  }, [abastecimentos, dados, range, customStart, customEnd]);
 
   const totalFuelSpend = metrics.porCombustivel.Gasolina + metrics.porCombustivel.Etanol || 1;
   const gasolinaPct = (metrics.porCombustivel.Gasolina / totalFuelSpend) * 100;
