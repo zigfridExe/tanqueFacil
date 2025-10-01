@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
     color: Colors.light.text,
   },
   scrollContainer: {
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     marginBottom: 8,
     color: Colors.light.text,
   },
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   radioTextSelected: {
     color: Colors.light.background,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   switchGroup: {
     flexDirection: 'row',
@@ -276,11 +276,11 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: Colors.light.tint,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   saveButtonText: {
     color: Colors.light.background,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
 });

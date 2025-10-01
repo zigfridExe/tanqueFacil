@@ -1,11 +1,10 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": ["expo/tsconfig.base", "./tsconfig.paths.json"],
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "jsx": "react-native",
+    "lib": ["es6", "dom", "es2017", "es2018", "es2019", "es2020", "es2021", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -13,11 +12,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "paths": {
-      "@/*": ["./*"],
-      "@src/*": ["src/*"]
-    },
-    "types": ["node", "jest"]
+    "moduleResolution": "node16",
+    "module": "NodeNext",
+    "target": "esnext",
+    "types": ["node", "react", "react-native", "@types/jest"],
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
   "include": [
     "**/*.ts",

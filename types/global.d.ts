@@ -3,6 +3,13 @@
 // Módulos de componentes
 /// <reference types="react-native" />
 
+declare module 'react-native' {
+  export * from 'react-native/types/index';
+  
+  // Adiciona uma declaração explícita para o Text
+  export const Text: React.ComponentType<React.ComponentProps<typeof import('react-native').Text>>;
+}
+
 declare module '@/components/reports/ConsumptionTrendReport' {
   import { ReactNode } from 'react';
   const Component: () => ReactNode;
