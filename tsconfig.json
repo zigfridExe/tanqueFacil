@@ -16,7 +16,7 @@
     "module": "NodeNext",
     "target": "esnext",
     "types": ["node", "react", "react-native", "@types/jest"],
-    "typeRoots": ["./node_modules/@types", "./types"]
+
   },
   "include": [
     "**/*.ts",
