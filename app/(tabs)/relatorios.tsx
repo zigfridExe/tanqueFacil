@@ -4,23 +4,25 @@ import PerformanceReport from '@/components/reports/PerformanceReport';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function RelatoriosScreen() {
+  const router = useRouter();
   const [scope, setScope] = useState<'all' | 'active'>('all');
-  // Nesta primeira etapa, usamos componentes com dados mockados
+  // Removidos dados mockados para build de testes
 
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>Relatórios</ThemedText>
-        <Link href={{ pathname: '/abastecimento-mapa', params: { scope } }} asChild>
-          <TouchableOpacity style={styles.mapButton}>
-            <ThemedText style={styles.mapButtonText}>Ver Mapa</ThemedText>
-          </TouchableOpacity>
-        </Link>
+        <TouchableOpacity
+          style={styles.mapButton}
+          onPress={() => router.push({ pathname: '/abastecimento-mapa', params: { scope } })}
+        >
+          <ThemedText style={styles.mapButtonText}>Ver Mapa</ThemedText>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.scopeRow}>

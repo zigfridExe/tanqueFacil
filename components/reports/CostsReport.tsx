@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 // Mock types for costs report
 type MockFill = {
@@ -20,7 +20,7 @@ interface CostsReportProps {
   mock?: boolean;
 }
 
-export default function CostsReport({ title = 'Custos', mock = true }: CostsReportProps) {
+export default function CostsReport({ title = 'Custos', mock = false }: CostsReportProps) {
   const { abastecimentos, carregarTodosAbastecimentos } = useAbastecimentos();
   const [range, setRange] = useState<'mes' | '30d' | 'custom'>('mes');
   const [showModal, setShowModal] = useState(false);
@@ -50,7 +50,7 @@ export default function CostsReport({ title = 'Custos', mock = true }: CostsRepo
 
   const metrics = useMemo(() => {
     // Preferir dados reais
-    let list = abastecimentos.length ? abastecimentos : dados;
+    let list = abastecimentos.length ? abastecimentos : (mock ? dados : []);
     // Aplicar filtro por período
     const now = new Date();
     let start: Date | null = null;
@@ -175,36 +175,55 @@ export default function CostsReport({ title = 'Custos', mock = true }: CostsRepo
         </View>
       </Modal>
 
-      {/* Estatísticas resumidas (inspirado em cards do app de clima) */}
-      <View style={styles.statsGrid}>
-        <StatCard label="Gasto Total (mês)" value={`R$ ${metrics.gastoTotal.toFixed(2)}`} icon="chart.bar" />
-        <StatCard label="Custo médio por litro" value={`R$ ${metrics.custoMedioLitro.toFixed(2)}/L`} icon="chart.bar" />
-        <StatCard label="Ticket médio" value={`R$ ${metrics.ticketMedio.toFixed(2)}`} icon="chart.bar" />
-        <StatCard label="Custo por km" value={`R$ ${metrics.custoPorKm.toFixed(2)}`} icon="chart.bar" />
-      </View>
-
-      {/* Distribuição por combustível com barras simples */}
-      <View style={styles.card}>
-        <View style={styles.titleRow}>
-          <IconSymbol name="chart.bar" color={Colors.light.text} size={18} />
-          <ThemedText style={styles.cardTitle}>Distribuição por combustível</ThemedText>
-        </View>
-        <ThemedText style={styles.smallMuted}>Total R$ {totalFuelSpend.toFixed(2)}</ThemedText>
-
-        <View style={styles.barRow}>
-          <View style={[styles.barBase, { backgroundColor: '#E6F0FF' }]}>
-            <View style={[styles.barFill, { width: `${gasolinaPct}%`, backgroundColor: Colors.light.tint }]} />
+      {/* Estado vazio quando desativado mock e sem dados */}
+      {(!mock && (!abastecimentos || abastecimentos.length === 0)) ? (
+        <View style={styles.card}>
+          <View style={styles.titleRow}>
+            <IconSymbol name="chart.bar" color={Colors.light.text} size={18} />
+            <ThemedText style={styles.cardTitle}>Sem dados disponíveis</ThemedText>
           </View>
-          <ThemedText style={styles.barLabel}>Gasolina {gasolinaPct.toFixed(0)}%</ThemedText>
+          <ThemedText style={styles.smallMuted}>Registre abastecimentos para ver os custos.</ThemedText>
         </View>
-
-        <View style={styles.barRow}>
-          <View style={[styles.barBase, { backgroundColor: '#FFF0E6' }]}>
-            <View style={[styles.barFill, { width: `${etanolPct}%`, backgroundColor: '#FF9800' }]} />
+      ) : (
+        <>
+          {/* Estatísticas resumidas (inspirado em cards do app de clima) */}
+          <View style={styles.statsGrid}>
+            <StatCard label="Gasto Total (mês)" value={`R$ ${metrics.gastoTotal.toFixed(2)}`} icon="chart.bar" />
+            <StatCard label="Custo médio por litro" value={`R$ ${metrics.custoMedioLitro.toFixed(2)}/L`} icon="chart.bar" />
+            <StatCard label="Ticket médio" value={`R$ ${metrics.ticketMedio.toFixed(2)}`} icon="chart.bar" />
+            <StatCard label="Custo por km" value={`R$ ${metrics.custoPorKm.toFixed(2)}`} icon="chart.bar" />
           </View>
-          <ThemedText style={styles.barLabel}>Etanol {etanolPct.toFixed(0)}%</ThemedText>
-        </View>
-      </View>
+
+          {/* Distribuição por combustível com barras simples */}
+          <View style={styles.card}>
+            <View style={styles.titleRow}>
+              <IconSymbol name="chart.bar" color={Colors.light.text} size={18} />
+              <ThemedText style={styles.cardTitle}>Distribuição por combustível</ThemedText>
+            </View>
+            {totalFuelSpend > 0 ? (
+              <>
+                <ThemedText style={styles.smallMuted}>Total R$ {totalFuelSpend.toFixed(2)}</ThemedText>
+
+                <View style={styles.barRow}>
+                  <View style={[styles.barBase, { backgroundColor: '#E6F0FF' }]}>
+                    <View style={[styles.barFill, { width: `${gasolinaPct}%`, backgroundColor: Colors.light.tint }]} />
+                  </View>
+                  <ThemedText style={styles.barLabel}>Gasolina {gasolinaPct.toFixed(0)}%</ThemedText>
+                </View>
+
+                <View style={styles.barRow}>
+                  <View style={[styles.barBase, { backgroundColor: '#FFF0E6' }]}>
+                    <View style={[styles.barFill, { width: `${etanolPct}%`, backgroundColor: '#FF9800' }]} />
+                  </View>
+                  <ThemedText style={styles.barLabel}>Etanol {etanolPct.toFixed(0)}%</ThemedText>
+                </View>
+              </>
+            ) : (
+              <ThemedText style={styles.smallMuted}>Nenhum gasto registrado com combustível.</ThemedText>
+            )}
+          </View>
+        </>
+      )}
     </View>
   );
 }

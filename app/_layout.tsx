@@ -1,10 +1,11 @@
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
+import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { initDatabase } from '../database/database';
@@ -37,8 +38,8 @@ export default function RootLayout() {
 
   if (!loaded || !dbInitialized) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+        <MaterialIcons name="local-gas-station" size={112} color="#174A7C" />
       </View>
     );
   }

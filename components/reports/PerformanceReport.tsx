@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function PerformanceReport() {
   const { abastecimentos, carregarTodosAbastecimentos } = useAbastecimentos();
@@ -122,11 +122,11 @@ export default function PerformanceReport() {
   }, [abastecimentos, range, customStart, customEnd]);
 
   const ganhoCalibragemPct = useMemo(() => {
-    const base = realStats || mock;
+    const base = realStats || ({ calibragem: { calibrado: 0, descalibrado: 0 } } as any);
     const { calibrado, descalibrado } = base.calibragem;
     if (descalibrado <= 0) return 0;
     return ((calibrado - descalibrado) / descalibrado) * 100;
-  }, [realStats, mock]);
+  }, [realStats]);
 
   return (
     <View style={styles.section}>
@@ -175,6 +175,17 @@ export default function PerformanceReport() {
         </View>
       </Modal>
 
+      {/* Estado vazio quando não há dados */}
+      {!realStats && (
+        <View style={styles.card}>
+          <View style={styles.titleRow}>
+            <IconSymbol name="chart.bar" color={Colors.light.text} size={18} />
+            <ThemedText style={styles.cardTitle}>Sem dados disponíveis</ThemedText>
+          </View>
+          <ThemedText style={styles.smallMuted}>Registre abastecimentos para ver estatísticas de desempenho.</ThemedText>
+        </View>
+      )}
+
       {/* Consumo por combustível */}
       <View style={styles.card}>
         <View style={styles.titleRow}>
@@ -182,13 +193,13 @@ export default function PerformanceReport() {
           <ThemedText style={styles.cardTitle}>Consumo por combustível</ThemedText>
         </View>
         <View style={styles.statsRow}>
-          <StatCard label="Gasolina" value={`${(realStats?.porCombustivel.Gasolina ?? mock.porCombustivel.Gasolina).toFixed(1)} km/L`} />
-          <StatCard label="Etanol" value={`${(realStats?.porCombustivel.Etanol ?? mock.porCombustivel.Etanol).toFixed(1)} km/L`} />
+          <StatCard label="Gasolina" value={`${(realStats?.porCombustivel.Gasolina ?? 0).toFixed(1)} km/L`} />
+          <StatCard label="Etanol" value={`${(realStats?.porCombustivel.Etanol ?? 0).toFixed(1)} km/L`} />
         </View>
         <MiniBars
           items={[
-            { label: 'Gasolina', value: realStats?.porCombustivel.Gasolina ?? mock.porCombustivel.Gasolina, color: Colors.light.tint },
-            { label: 'Etanol', value: realStats?.porCombustivel.Etanol ?? mock.porCombustivel.Etanol, color: '#FF9800' },
+            { label: 'Gasolina', value: realStats?.porCombustivel.Gasolina ?? 0, color: Colors.light.tint },
+            { label: 'Etanol', value: realStats?.porCombustivel.Etanol ?? 0, color: '#FF9800' },
           ]}
           max={14}
         />
@@ -201,17 +212,17 @@ export default function PerformanceReport() {
           <ThemedText style={styles.cardTitle}>Consumo por tipo de trajeto</ThemedText>
         </View>
         <View style={styles.statsRow}>
-          <StatCard label="Cidade" value={`${(realStats?.porTrajeto.Cidade ?? mock.porTrajeto.Cidade).toFixed(1)} km/L`} />
-          <StatCard label="Estrada" value={`${(realStats?.porTrajeto.Estrada ?? mock.porTrajeto.Estrada).toFixed(1)} km/L`} />
+          <StatCard label="Cidade" value={`${(realStats?.porTrajeto.Cidade ?? 0).toFixed(1)} km/L`} />
+          <StatCard label="Estrada" value={`${(realStats?.porTrajeto.Estrada ?? 0).toFixed(1)} km/L`} />
         </View>
         <View style={styles.statsRow}>
-          <StatCard label="Misto" value={`${(realStats?.porTrajeto.Misto ?? mock.porTrajeto.Misto).toFixed(1)} km/L`} />
+          <StatCard label="Misto" value={`${(realStats?.porTrajeto.Misto ?? 0).toFixed(1)} km/L`} />
         </View>
         <MiniBars
           items={[
-            { label: 'Cidade', value: realStats?.porTrajeto.Cidade ?? mock.porTrajeto.Cidade, color: '#9C27B0' },
-            { label: 'Estrada', value: realStats?.porTrajeto.Estrada ?? mock.porTrajeto.Estrada, color: '#4CAF50' },
-            { label: 'Misto', value: realStats?.porTrajeto.Misto ?? mock.porTrajeto.Misto, color: '#03A9F4' },
+            { label: 'Cidade', value: realStats?.porTrajeto.Cidade ?? 0, color: '#9C27B0' },
+            { label: 'Estrada', value: realStats?.porTrajeto.Estrada ?? 0, color: '#4CAF50' },
+            { label: 'Misto', value: realStats?.porTrajeto.Misto ?? 0, color: '#03A9F4' },
           ]}
           max={14}
         />
@@ -224,16 +235,16 @@ export default function PerformanceReport() {
           <ThemedText style={styles.cardTitle}>Impacto da calibragem de pneus</ThemedText>
         </View>
         <View style={styles.statsRow}>
-          <StatCard label="Calibrado" value={`${(realStats?.calibragem.calibrado ?? mock.calibragem.calibrado).toFixed(1)} km/L`} />
-          <StatCard label="Descalibrado" value={`${(realStats?.calibragem.descalibrado ?? mock.calibragem.descalibrado).toFixed(1)} km/L`} />
+          <StatCard label="Calibrado" value={`${(realStats?.calibragem.calibrado ?? 0).toFixed(1)} km/L`} />
+          <StatCard label="Descalibrado" value={`${(realStats?.calibragem.descalibrado ?? 0).toFixed(1)} km/L`} />
         </View>
         <ThemedText style={styles.smallMuted}>
           Ganho estimado: {ganhoCalibragemPct.toFixed(1)}%
         </ThemedText>
         <MiniBars
           items={[
-            { label: 'Calibrado', value: realStats?.calibragem.calibrado ?? mock.calibragem.calibrado, color: '#2E7D32' },
-            { label: 'Descalibrado', value: realStats?.calibragem.descalibrado ?? mock.calibragem.descalibrado, color: '#F44336' },
+            { label: 'Calibrado', value: realStats?.calibragem.calibrado ?? 0, color: '#2E7D32' },
+            { label: 'Descalibrado', value: realStats?.calibragem.descalibrado ?? 0, color: '#F44336' },
           ]}
           max={14}
         />

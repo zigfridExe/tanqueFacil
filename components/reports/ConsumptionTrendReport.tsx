@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function ConsumptionTrendReport() {
   const { abastecimentos, carregarTodosAbastecimentos } = useAbastecimentos();
@@ -61,8 +61,11 @@ export default function ConsumptionTrendReport() {
     return orderedSeg.slice(-8).map((s) => s.kml);
   }, [abastecimentos, range, customStart, customEnd]);
 
-  // Fallback mock caso não haja dados
-  const serie = useMemo(() => realSerie ?? [9.8, 10.4, 11.2, 10.9, 11.6, 12.1, 11.7, 11.4], [realSerie]);
+  // Fallback: usar mock somente se permitido
+  const serie = useMemo(() => {
+    if (realSerie) return realSerie;
+    return [];
+  }, [realSerie]);
   const media = useMemo(() => (serie.length ? serie.reduce((s, v) => s + v, 0) / serie.length : 0), [serie]);
   const max = Math.max(...serie, 12.5);
 
@@ -117,21 +120,25 @@ export default function ConsumptionTrendReport() {
         <ThemedText style={styles.cardTitle}>Média móvel</ThemedText>
         <ThemedText style={styles.smallMuted}>Atual: {media.toFixed(1)} km/L</ThemedText>
 
-        {/* Linha de pílulas/barras proporcional, estilo "hourly" do app de clima */}
-        <View style={styles.pillsRow}>
-          {serie.map((v, i) => {
-            const pct = Math.max(8, Math.min(100, (v / max) * 100));
-            const bg = v >= media ? Colors.light.tint : '#FF9800';
-            return (
-              <View key={i} style={styles.pillItem}>
-                <View style={[styles.pillBarBase]}> 
-                  <View style={[styles.pillBarFill, { height: `${pct}%`, backgroundColor: bg }]} />
+        {/* Estado vazio se sem dados */}
+        {(!serie || serie.length === 0) ? (
+          <ThemedText style={styles.smallMuted}>Sem dados suficientes para calcular a tendência.</ThemedText>
+        ) : (
+          <View style={styles.pillsRow}>
+            {serie.map((v, i) => {
+              const pct = Math.max(8, Math.min(100, (v / max) * 100));
+              const bg = v >= media ? Colors.light.tint : '#FF9800';
+              return (
+                <View key={i} style={styles.pillItem}>
+                  <View style={[styles.pillBarBase]}> 
+                    <View style={[styles.pillBarFill, { height: `${pct}%`, backgroundColor: bg }]} />
+                  </View>
+                  <ThemedText style={styles.pillLabel}>{v.toFixed(1)}</ThemedText>
                 </View>
-                <ThemedText style={styles.pillLabel}>{v.toFixed(1)}</ThemedText>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
+        )}
       </View>
     </View>
   );

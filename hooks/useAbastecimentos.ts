@@ -7,6 +7,37 @@ export const useAbastecimentos = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Carregar abastecimentos por veículo
+  const carregarAbastecimentosPorVeiculo = useCallback(async (carroId: number) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const dados = await abastecimentoService.buscarAbastecimentosPorVeiculo(carroId);
+      setAbastecimentos(dados);
+      } catch {
+      setError('Erro ao carregar abastecimentos');
+      setAbastecimentos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Carregar todos os abastecimentos
+  const carregarTodosAbastecimentos = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const dados = await abastecimentoService.buscarTodosAbastecimentos();
+      setAbastecimentos(dados);
+      } catch {
+      setError('Erro ao carregar abastecimentos');
+      setAbastecimentos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Buscar último abastecimento por veículo
   const buscarUltimoAbastecimento = useCallback(async (carroId: number) => {
@@ -44,39 +75,7 @@ export const useAbastecimentos = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  // Carregar abastecimentos por veículo
-  const carregarAbastecimentosPorVeiculo = useCallback(async (carroId: number) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const dados = await abastecimentoService.buscarAbastecimentosPorVeiculo(carroId);
-      setAbastecimentos(dados);
-      } catch {
-      setError('Erro ao carregar abastecimentos');
-      setAbastecimentos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Carregar todos os abastecimentos
-  const carregarTodosAbastecimentos = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const dados = await abastecimentoService.buscarTodosAbastecimentos();
-      setAbastecimentos(dados);
-      } catch {
-      setError('Erro ao carregar abastecimentos');
-      setAbastecimentos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  }, [carregarAbastecimentosPorVeiculo]);
 
   // Atualizar abastecimento
   const atualizarAbastecimento = useCallback(async (id: number, abastecimento: AbastecimentoForm): Promise<boolean> => {

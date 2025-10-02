@@ -2,15 +2,15 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, StyleSheet, View, Pressable, Linking, Platform, Text } from 'react-native';
-import MapView, { Marker, UrlTile, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
-import { useLocalSearchParams } from 'expo-router';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { useVehicleStore } from '@/src/store/useVehicleStore';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location';
+import { useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Dimensions, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, Region, UrlTile } from 'react-native-maps';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -18,6 +18,22 @@ const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 export default function AbastecimentoMapaScreen() {
+  // Proteção contra crash no carregamento inicial
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.light.tint} />
+        <ThemedText>Inicializando mapa...</ThemedText>
+      </ThemedView>
+    );
+  }
   const { abastecimentos, loading, error, carregarTodosAbastecimentos, carregarAbastecimentosPorVeiculo } = useAbastecimentos();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locating, setLocating] = useState(true);
@@ -38,11 +54,19 @@ export default function AbastecimentoMapaScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    if (scope === 'active' && selectedVehicle?.id) {
-      carregarAbastecimentosPorVeiculo(selectedVehicle.id);
-    } else {
-      carregarTodosAbastecimentos();
-    }
+    const carregarDados = async () => {
+      try {
+        if (scope === 'active' && selectedVehicle?.id) {
+          await carregarAbastecimentosPorVeiculo(selectedVehicle.id);
+        } else {
+          await carregarTodosAbastecimentos();
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do mapa:', error);
+      }
+    };
+    
+    carregarDados();
   }, [scope, selectedVehicle?.id, carregarAbastecimentosPorVeiculo, carregarTodosAbastecimentos]);
 
   useEffect(() => {
@@ -50,22 +74,43 @@ export default function AbastecimentoMapaScreen() {
     (async () => {
       try {
         setLocating(true);
+        setLocationError(null);
+        
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          setLocationError('Permissão de localização negada.');
+          if (!cancelled) {
+            setLocationError('Permissão de localização negada.');
+          }
           return;
         }
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        if (!cancelled) {
-          setUserLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        
+        const pos = await Location.getCurrentPositionAsync({ 
+          accuracy: Location.Accuracy.Balanced,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutos
+        });
+        
+        if (!cancelled && pos?.coords) {
+          setUserLocation({ 
+            latitude: pos.coords.latitude, 
+            longitude: pos.coords.longitude 
+          });
         }
       } catch (e: any) {
-        if (!cancelled) setLocationError(e?.message || 'Falha ao obter localização.');
+        if (!cancelled) {
+          console.error('Erro de localização:', e);
+          setLocationError(e?.message || 'Falha ao obter localização.');
+        }
       } finally {
-        if (!cancelled) setLocating(false);
+        if (!cancelled) {
+          setLocating(false);
+        }
       }
     })();
-    return () => { cancelled = true; };
+    
+    return () => { 
+      cancelled = true; 
+    };
   }, []);
 
   const initialRegion = useMemo(() => {
@@ -125,35 +170,81 @@ export default function AbastecimentoMapaScreen() {
   };
 
   const getResumo = useCallback((lat: number, lon: number, radiusMeters: number) => {
-    const raioKm = Math.max(50, Math.min(5000, Math.round(radiusMeters))) / 1000;
-    const proximos = abastecimentos.filter(a => a.latitude && a.longitude && haversineKm(lat, lon, a.latitude!, a.longitude!) <= raioKm);
-    const count = proximos.length;
-    if (count === 0) return null;
-    const totalLitros = proximos.reduce((s, a) => s + a.litros, 0);
-    const totalGasto = proximos.reduce((s, a) => s + a.valorPago, 0);
-    const precoMedio = totalLitros > 0 ? totalGasto / totalLitros : 0;
-    const dataMaisRecente = proximos.map(p => p.data).sort().slice(-1)[0];
-    return { quantidade: count, dataMaisRecente, totalLitros, precoMedio, totalGasto } as const;
+    try {
+      const raioKm = Math.max(50, Math.min(5000, Math.round(radiusMeters))) / 1000;
+      const proximos = abastecimentos.filter(a => 
+        a && 
+        typeof a.latitude === 'number' && 
+        typeof a.longitude === 'number' && 
+        !isNaN(a.latitude) && 
+        !isNaN(a.longitude) &&
+        haversineKm(lat, lon, a.latitude, a.longitude) <= raioKm
+      );
+      const count = proximos.length;
+      if (count === 0) return null;
+      
+      const totalLitros = proximos.reduce((s, a) => s + (a.litros || 0), 0);
+      const totalGasto = proximos.reduce((s, a) => s + (a.valorPago || 0), 0);
+      const precoMedio = totalLitros > 0 ? totalGasto / totalLitros : 0;
+      const dataMaisRecente = proximos
+        .map(p => p.data)
+        .filter(data => data)
+        .sort()
+        .slice(-1)[0] || null;
+        
+      return { quantidade: count, dataMaisRecente, totalLitros, precoMedio, totalGasto } as const;
+    } catch (error) {
+      console.error('Erro ao calcular resumo:', error);
+      return null;
+    }
   }, [abastecimentos]);
 
   const abastecimentosComLocalizacao = useMemo(
-    () => abastecimentos.filter((ab) => ab.latitude && ab.longitude),
+    () => abastecimentos.filter((ab) => 
+      ab && 
+      typeof ab.latitude === 'number' && 
+      typeof ab.longitude === 'number' && 
+      !isNaN(ab.latitude) && 
+      !isNaN(ab.longitude)
+    ),
     [abastecimentos]
   );
 
   useEffect(() => {
     if (loading || locating || previewShown) return;
     if (abastecimentosComLocalizacao.length === 0) return;
-    const baseLat = userLocation?.latitude ?? abastecimentosComLocalizacao[0].latitude!;
-    const baseLon = userLocation?.longitude ?? abastecimentosComLocalizacao[0].longitude!;
-    let best = abastecimentosComLocalizacao[0];
-    let bestDist = haversineKm(baseLat, baseLon, best.latitude!, best.longitude!);
-    for (const ab of abastecimentosComLocalizacao) {
-      const d = haversineKm(baseLat, baseLon, ab.latitude!, ab.longitude!);
-      if (d < bestDist) { best = ab; bestDist = d; }
+    
+    try {
+      const primeiroAbaste = abastecimentosComLocalizacao[0];
+      if (!primeiroAbaste || typeof primeiroAbaste.latitude !== 'number' || typeof primeiroAbaste.longitude !== 'number') {
+        return;
+      }
+      
+      const baseLat = userLocation?.latitude ?? primeiroAbaste.latitude;
+      const baseLon = userLocation?.longitude ?? primeiroAbaste.longitude;
+      
+      let best = primeiroAbaste;
+      let bestDist = haversineKm(baseLat, baseLon, best.latitude, best.longitude);
+      
+      for (const ab of abastecimentosComLocalizacao) {
+        if (ab && typeof ab.latitude === 'number' && typeof ab.longitude === 'number') {
+          const d = haversineKm(baseLat, baseLon, ab.latitude, ab.longitude);
+          if (d < bestDist) { 
+            best = ab; 
+            bestDist = d; 
+          }
+        }
+      }
+      
+      setSelected({ 
+        lat: best.latitude, 
+        lon: best.longitude, 
+        title: `Abastecimento ${best.data || 'N/A'}` 
+      });
+      setPreviewShown(true);
+    } catch (error) {
+      console.error('Erro na seleção automática:', error);
     }
-    setSelected({ lat: best.latitude!, lon: best.longitude!, title: `Abastecimento ${best.data}` });
-    setPreviewShown(true);
   }, [loading, locating, previewShown, abastecimentosComLocalizacao, userLocation]);
 
   const selectedResumo = useMemo(() => {
@@ -162,19 +253,29 @@ export default function AbastecimentoMapaScreen() {
   }, [selected, clusterRadiusMeters, getResumo]);
 
   const markers = useMemo(() => (
-    abastecimentosComLocalizacao.map((abastecimento) => (
-      <Marker
-        key={abastecimento.id ?? `${abastecimento.carroId}-${abastecimento.data}`}
-        coordinate={{ latitude: abastecimento.latitude!, longitude: abastecimento.longitude! }}
-        title={`Abastecimento em ${abastecimento.data}`}
-        description={`Litros: ${abastecimento.litros}, Valor: R$ ${abastecimento.valorPago.toFixed(2)}`}
-        onPress={() => setSelected({ lat: abastecimento.latitude!, lon: abastecimento.longitude!, title: `Abastecimento ${abastecimento.data}` })}
-      >
-        <View style={styles.pumpMarker}>
-          <MaterialIcons name="local-gas-station" size={24} color="#FF5722" />
-        </View>
-      </Marker>
-    ))
+    abastecimentosComLocalizacao
+      .filter((abastecimento) => 
+        abastecimento && 
+        typeof abastecimento.latitude === 'number' && 
+        typeof abastecimento.longitude === 'number'
+      )
+      .map((abastecimento) => (
+        <Marker
+          key={abastecimento.id ?? `${abastecimento.carroId}-${abastecimento.data}-${abastecimento.latitude}-${abastecimento.longitude}`}
+          coordinate={{ latitude: abastecimento.latitude, longitude: abastecimento.longitude }}
+          title={`Abastecimento em ${abastecimento.data || 'N/A'}`}
+          description={`Litros: ${abastecimento.litros || 0}, Valor: R$ ${(abastecimento.valorPago || 0).toFixed(2)}`}
+          onPress={() => setSelected({ 
+            lat: abastecimento.latitude, 
+            lon: abastecimento.longitude, 
+            title: `Abastecimento ${abastecimento.data || 'N/A'}` 
+          })}
+        >
+          <View style={styles.pumpMarker}>
+            <MaterialIcons name="local-gas-station" size={24} color="#FF5722" />
+          </View>
+        </Marker>
+      ))
   ), [abastecimentosComLocalizacao]);
 
   if (loading || locating) {
@@ -213,6 +314,14 @@ export default function AbastecimentoMapaScreen() {
             style={styles.map}
             initialRegion={initialRegion}
             ref={mapRef}
+            showsUserLocation={false}
+            showsMyLocationButton={false}
+            loadingEnabled={true}
+            showsBuildings={false}
+            showsIndoors={false}
+            showsCompass={false}
+            provider={undefined}
+            moveOnMarkerPress={true}
           >
             {MAPTILER_KEY ? (
               <UrlTile
