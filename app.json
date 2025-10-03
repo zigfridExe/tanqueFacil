@@ -57,8 +57,7 @@
           "locationWhenInUsePermission": "Este app precisa da sua localização para mostrar os postos de gasolina próximos no mapa.",
           "isAndroidBackgroundLocationEnabled": true
         }
-      ],
-      "react-native-maps"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
