@@ -10,7 +10,7 @@ import { useVehicleStore } from '@/src/store/useVehicleStore';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 
 
@@ -55,7 +55,7 @@ export default function ConfiguracoesScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} useSafeArea>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <ThemedText style={styles.title}>Configurações do Aplicativo</ThemedText>
@@ -88,12 +88,14 @@ export default function ConfiguracoesScreen() {
           <ThemedText style={styles.sectionTitle}>Preferências de Exibição</ThemedText>
           <View style={styles.switchGroup}>
             <ThemedText style={styles.label}>Tema Escuro</ThemedText>
-            <Switch
-              value={darkMode}
-              onValueChange={toggleDarkMode}
-              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={darkMode ? Colors.light.background : Colors.light.text}
-            />
+            <TouchableOpacity
+              style={[styles.switchButton, darkMode && styles.switchButtonActive]}
+              onPress={toggleDarkMode}
+            >
+              <ThemedText style={[styles.switchButtonText, darkMode && styles.switchButtonTextActive]}>
+                {darkMode ? 'Ativado' : 'Desativado'}
+              </ThemedText>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -101,21 +103,25 @@ export default function ConfiguracoesScreen() {
           <ThemedText style={styles.sectionTitle}>Funcionalidades</ThemedText>
           <View style={styles.switchGroup}>
             <ThemedText style={styles.label}>Notificações</ThemedText>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={toggleNotifications}
-              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={notificationsEnabled ? Colors.light.background : Colors.light.text}
-            />
+            <TouchableOpacity
+              style={[styles.switchButton, notificationsEnabled && styles.switchButtonActive]}
+              onPress={toggleNotifications}
+            >
+              <ThemedText style={[styles.switchButtonText, notificationsEnabled && styles.switchButtonTextActive]}>
+                {notificationsEnabled ? 'Ativado' : 'Desativado'}
+              </ThemedText>
+            </TouchableOpacity>
           </View>
           <View style={styles.switchGroup}>
             <ThemedText style={styles.label}>Backup Automático</ThemedText>
-            <Switch
-              value={automaticBackup}
-              onValueChange={toggleAutomaticBackup}
-              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={automaticBackup ? Colors.light.background : Colors.light.text}
-            />
+            <TouchableOpacity
+              style={[styles.switchButton, automaticBackup && styles.switchButtonActive]}
+              onPress={toggleAutomaticBackup}
+            >
+              <ThemedText style={[styles.switchButtonText, automaticBackup && styles.switchButtonTextActive]}>
+                {automaticBackup ? 'Ativado' : 'Desativado'}
+              </ThemedText>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -154,12 +160,14 @@ export default function ConfiguracoesScreen() {
           <ThemedText style={styles.sectionTitle}>Opções de Desenvolvedor</ThemedText>
           <View style={styles.switchGroup}>
             <ThemedText style={styles.label}>Exibir coordenadas no histórico</ThemedText>
-            <Switch
-              value={showCoordinates}
-              onValueChange={toggleShowCoordinates}
-              trackColor={{ false: Colors.light.tint, true: Colors.light.tint }}
-              thumbColor={showCoordinates ? Colors.light.background : Colors.light.text}
-            />
+            <TouchableOpacity
+              style={[styles.switchButton, showCoordinates && styles.switchButtonActive]}
+              onPress={toggleShowCoordinates}
+            >
+              <ThemedText style={[styles.switchButtonText, showCoordinates && styles.switchButtonTextActive]}>
+                {showCoordinates ? 'Ativado' : 'Desativado'}
+              </ThemedText>
+            </TouchableOpacity>
           </View>
           {/* Botão para solicitar permissão de localização (GPS) */}
           <TouchableOpacity
@@ -311,7 +319,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   header: {
@@ -400,5 +408,24 @@ const styles = StyleSheet.create({
   supportButtonText: {
     color: Colors.light.tint,
     textDecorationLine: 'underline',
+  },
+  switchButton: {
+    backgroundColor: '#E0E0E0',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  switchButtonActive: {
+    backgroundColor: Colors.light.tint,
+  },
+  switchButtonText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  switchButtonTextActive: {
+    color: Colors.light.background,
   },
 });

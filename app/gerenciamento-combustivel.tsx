@@ -4,18 +4,25 @@ import FuelManagementCard from '@/components/gerenciamento/FuelManagementCard';
 import { Colors } from '@/constants/Colors';
 import { useAbastecimentos } from '@/hooks/useAbastecimentos';
 import { useVeiculos } from '@/hooks/useVeiculos';
-import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function GerenciamentoCombustivelScreen() {
   const { veiculos, loading: loadingVeiculos } = useVeiculos();
-  const { abastecimentos, loading: loadingAbastecimentos } = useAbastecimentos();
+  const { abastecimentos, loading: loadingAbastecimentos, carregarTodosAbastecimentos } = useAbastecimentos();
 
   const [nivelCombustivelPercentual, setNivelCombustivelPercentual] = useState('50'); // Default to 50%
   const [veiculoSelecionado] = useState<number | null>(null); // ID do veículo selecionado O everton removeu o setVeiculoSelecionado
 
   const isLoading = loadingVeiculos || loadingAbastecimentos;
+
+  // Carregar abastecimentos quando a tela recebe foco
+  useFocusEffect(
+    useCallback(() => {
+      carregarTodosAbastecimentos();
+    }, [carregarTodosAbastecimentos])
+  );
 
   const consumosMedios = useMemo(() => {
     const resultados: { [key: number]: number } = {};
@@ -51,9 +58,10 @@ export default function GerenciamentoCombustivelScreen() {
   }, [veiculos, veiculoSelecionado]);
 
   const autonomia = useMemo(() => {
-    if (!veiculoAtual || !nivelCombustivelPercentual || !veiculoAtual.id || !consumosMedios[veiculoAtual.id]) {
+    if (!veiculoAtual || !nivelCombustivelPercentual || !veiculoAtual.id) {
       return null;
     }
+    
     const percentual = parseFloat(nivelCombustivelPercentual.replace(',', '.')) / 100;
     if (isNaN(percentual) || percentual < 0 || percentual > 1) {
       return null;
@@ -61,6 +69,11 @@ export default function GerenciamentoCombustivelScreen() {
 
     const litrosRestantes = veiculoAtual.capacidadeTanque * percentual;
     const consumoMedio = consumosMedios[veiculoAtual.id];
+    
+    // Se não há consumo médio calculado, retorna null
+    if (!consumoMedio) {
+      return null;
+    }
 
     return litrosRestantes * consumoMedio;
   }, [veiculoAtual, nivelCombustivelPercentual, consumosMedios]);
@@ -82,7 +95,6 @@ export default function GerenciamentoCombustivelScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.loadingState}>
-          <ActivityIndicator size="large" color={Colors.light.tint} />
           <ThemedText style={styles.loadingText}>Carregando dados...</ThemedText>
         </View>
       </ThemedView>
@@ -104,8 +116,8 @@ export default function GerenciamentoCombustivelScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <ThemedView style={styles.container} useSafeArea>
+      <ScrollView>
         <FuelManagementCard
           veiculoAtual={veiculoAtual}
           consumosMedios={consumosMedios}

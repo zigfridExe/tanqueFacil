@@ -1,14 +1,14 @@
 import { router, useFocusEffect } from 'expo-router';
 import React, { memo, useCallback } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  Switch,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Switch,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -247,7 +247,7 @@ export default function VeiculosScreen() {
   ), [selectedVehicle?.id, onToggleActive, handleConfigurarVeiculo, handleEditarVeiculo, handleExcluirVeiculo]);
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} useSafeArea>
       <View style={styles.header}>
         <ThemedText style={styles.title}>Meus Veículos</ThemedText>
         <TouchableOpacity style={styles.addButton} onPress={handleAdicionarVeiculo}>
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 20,
   },
   title: {
     fontSize: 28,

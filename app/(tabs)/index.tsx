@@ -69,7 +69,7 @@ export default function HomeScreen() {
   }, [veiculoPrincipal, carregarVeiculos]);
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} useSafeArea>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Cabeçalho */}
         <View style={styles.header}>
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 30,
-    paddingTop: 40,
+    paddingTop: 20,
   },
   title: {
     fontSize: 32,

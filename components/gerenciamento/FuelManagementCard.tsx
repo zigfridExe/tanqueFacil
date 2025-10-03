@@ -111,7 +111,13 @@ export default function FuelManagementCard({
 
         {veiculoAtual?.id && !consumosMedios[veiculoAtual.id] && (
           <ThemedText style={styles.warningText}>
-            Cadastre pelo menos 2 abastecimentos para calcular a autonomia.
+            Cadastre pelo menos 2 abastecimentos para calcular a autonomia e consumo médio.
+          </ThemedText>
+        )}
+        
+        {veiculoAtual?.id && consumosMedios[veiculoAtual.id] && autonomia && (
+          <ThemedText style={styles.successText}>
+            ✓ Dados calculados com sucesso! Autonomia baseada no consumo médio real.
           </ThemedText>
         )}
       </View>
@@ -270,6 +276,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     padding: 8,
     backgroundColor: '#fbeae5',
+    borderRadius: 8,
+  },
+  successText: {
+    color: '#27ae60',
+    marginTop: 12,
+    textAlign: 'center',
+    fontSize: 14,
+    padding: 8,
+    backgroundColor: '#e8f5e8',
     borderRadius: 8,
   },
   button: {
