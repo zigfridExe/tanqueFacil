@@ -25,15 +25,6 @@ export default function AbastecimentoMapaScreen() {
     setMounted(true);
     return () => setMounted(false);
   }, []);
-
-  if (!mounted) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.light.tint} />
-        <ThemedText>Inicializando mapa...</ThemedText>
-      </ThemedView>
-    );
-  }
   const { abastecimentos, loading, error, carregarTodosAbastecimentos, carregarAbastecimentosPorVeiculo } = useAbastecimentos();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locating, setLocating] = useState(true);
@@ -278,11 +269,11 @@ export default function AbastecimentoMapaScreen() {
       ))
   ), [abastecimentosComLocalizacao]);
 
-  if (loading || locating) {
+  if (!mounted || loading || locating) {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.light.tint} />
-        <ThemedText>Carregando dados do mapa...</ThemedText>
+        <ThemedText>{!mounted ? 'Inicializando mapa...' : 'Carregando dados do mapa...'}</ThemedText>
       </ThemedView>
     );
   }
